@@ -2,8 +2,8 @@ from fastapi import HTTPException
 
 from sqlalchemy import select
 
-from app.database.database import async_session_maker
-from app.database.models import Instrument, User, UserInventory
+from database.database import async_session_maker
+from database.models import Instrument, User, UserInventory
 
 
 async def create_instrument(name: str, ticker: str) -> Instrument:

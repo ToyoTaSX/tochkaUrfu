@@ -5,11 +5,11 @@ from typing import List
 
 from sqlalchemy import select, asc, desc
 
-from app.crud.inventory import get_user_inventory
-from app.crud.transaction import create_transaction
-from app.crud.user import __change_balance
-from app.database.database import async_session_maker
-from app.database.models import Order, DirectionEnum, User, OrderStatusEnum
+from crud.inventory import get_user_inventory
+from crud.transaction import create_transaction
+from crud.user import __change_balance
+from database.database import async_session_maker
+from database.models import Order, DirectionEnum, User, OrderStatusEnum
 
 order_lock = asyncio.Lock()
 

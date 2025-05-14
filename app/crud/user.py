@@ -6,8 +6,8 @@ from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from app.database.models import User, RoleEnum, Instrument, UserInventory, Order
-from app.database.database import async_session_maker
+from database.models import User, RoleEnum, Instrument, UserInventory, Order
+from database.database import async_session_maker
 
 
 async def create_user(name: str, role: RoleEnum=RoleEnum.USER) -> User:

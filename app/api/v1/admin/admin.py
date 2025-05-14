@@ -2,11 +2,11 @@ import os
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.api.v1.admin.schemas import InstrumentCreateRequest, BalanceChangeScheme
-from app.api.v1.auth.jwt import get_current_admin
-from app.crud.instrument import create_instrument, get_instrument_by_ticker, delete_instrument
-from app.crud.user import get_user, change_balance, delete_user
-from app.database.models import User
+from api.v1.admin.schemas import InstrumentCreateRequest, BalanceChangeScheme
+from api.v1.auth.jwt import get_current_admin
+from crud.instrument import create_instrument, get_instrument_by_ticker, delete_instrument
+from crud.user import get_user, change_balance, delete_user
+from database.models import User
 
 router = APIRouter()
 

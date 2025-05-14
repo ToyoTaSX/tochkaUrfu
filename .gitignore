@@ -1,9 +1,11 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
 .idea
+/postgres_data
 *.py[cod]
 *$py.class
 app/alembic/versions/*.py
+docker-alembic
 
 # C extensions
 *.so
@@ -122,7 +124,7 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env
+app/.env
 .venv
 env/
 venv/

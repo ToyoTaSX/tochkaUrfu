@@ -2,10 +2,10 @@ import asyncio
 
 import jwt
 from datetime import datetime, timedelta
-from app.crud.user import get_user, apply_api_key
+from crud.user import get_user, apply_api_key
 from fastapi import HTTPException, Depends, Request, status
 import os
-from app.database.models import User, RoleEnum
+from database.models import User, RoleEnum
 
 class OAuth2TokenWithPrefix:
     def __init__(self, token_prefix: str = "TOKEN"):

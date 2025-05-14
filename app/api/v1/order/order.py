@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.api.v1.auth.jwt import get_current_user
-from app.api.v1.order.schemas import CreateOrderScheme
-from app.crud.order import create_limit_sell_order, create_limit_buy_order, create_market_buy_order, \
+from api.v1.auth.jwt import get_current_user
+from api.v1.order.schemas import CreateOrderScheme
+from crud.order import create_limit_sell_order, create_limit_buy_order, create_market_buy_order, \
     create_market_sell_order, cancel_order, get_order
-from app.crud.user import get_user_orders
-from app.database.models import User
+from crud.user import get_user_orders
+from database.models import User
 
 router = APIRouter()
 

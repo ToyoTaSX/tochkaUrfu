@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends
-from app.api.v1.auth.jwt import get_current_user, create_access_token, get_current_admin
+from api.v1.auth.jwt import get_current_user, create_access_token, get_current_admin
 from .schemas import UserAuth
-from app.database.models import User, DirectionEnum
-from app.crud.user import create_user
-from app.crud.instrument import get_all_instruments
-from app.crud.order import get_orders
-from app.crud.transaction import get_transactions_by_ticker
+from database.models import User, DirectionEnum
+from crud.user import create_user
+from crud.instrument import get_all_instruments
+from crud.order import get_orders
+from crud.transaction import get_transactions_by_ticker
 
 router = APIRouter()
 

@@ -2,8 +2,8 @@ import uuid
 from typing import List, Optional
 
 from sqlalchemy import select
-from app.database.database import async_session_maker
-from app.database.models import UserInventory
+from database.database import async_session_maker
+from database.models import UserInventory
 
 async def get_user_inventory(user_id: uuid.UUID, ticker: Optional[str] = None) -> List[UserInventory]:
     async with async_session_maker() as session:
