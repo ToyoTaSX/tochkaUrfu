@@ -1,22 +1,20 @@
-from fastapi import APIRouter, Depends, HTTPException
-from api.v1.auth.jwt import get_current_user, create_access_token, get_current_admin
+from fastapi import APIRouter, Depends
+from app.api.v1.auth.jwt import get_current_user, create_access_token, get_current_admin
 from .schemas import UserAuth
-from database.models import User, DirectionEnum
-from crud.user import create_user, get_user
-from crud.instrument import get_all_instruments
-from crud.order import get_orders
-from crud.transaction import get_transactions_by_ticker
+from app.database.models import User, DirectionEnum
+from app.crud.user import create_user
+from app.crud.instrument import get_all_instruments
+from app.crud.order import get_orders
+from app.crud.transaction import get_transactions_by_ticker
 
 router = APIRouter()
 
 @router.post('/register')
 async def register(user: UserAuth):
-    if await get_user(user.name):
-        raise HTTPException(status_code=400, detail=f"Username already exists")
     user = await create_user(user.name)
     data = {
             "name": user.name,
-            "id": user.id,
+            "id": str(user.id),
             "role": user.role.name
         }
     token = create_access_token(data)
@@ -25,7 +23,10 @@ async def register(user: UserAuth):
 
 @router.get('/instrument')
 async def public_test():
-    return await get_all_instruments()
+    return [{
+        "name": i.name,
+        "ticker": i.ticker
+    } for i in await get_all_instruments()]
 
 @router.get('/orderbook/{ticker}')
 async def public_test(ticker: str, limit: int = 10):

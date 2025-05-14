@@ -1,0 +1,83 @@
+import os
+
+from fastapi import APIRouter, Depends, HTTPException
+
+from app.api.v1.admin.schemas import InstrumentCreateRequest, BalanceChangeScheme
+from app.api.v1.auth.jwt import get_current_admin
+from app.crud.instrument import create_instrument, get_instrument_by_ticker, delete_instrument
+from app.crud.user import get_user, change_balance, delete_user
+from app.database.models import User
+
+router = APIRouter()
+
+
+@router.post('/instrument')
+async def instrument(instrument: InstrumentCreateRequest, user: User = Depends(get_current_admin)):
+    await create_instrument(instrument.name, instrument.ticker)
+    return {
+        "success": True
+    }
+
+
+@router.post('/balance/deposit')
+async def deposit(balance_change: BalanceChangeScheme, admin: User = Depends(get_current_admin)):
+    user = await get_user(str(balance_change.user_id))
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if balance_change.ticker != os.getenv('BASE_INSTRUMENT_TICKER'):
+        instrument = await get_instrument_by_ticker(balance_change.ticker)
+        if not instrument:
+            raise HTTPException(status_code=404, detail="Instrument not found")
+
+    await change_balance(str(balance_change.user_id), balance_change.ticker, balance_change.amount)
+
+    return {
+        "success": True
+    }
+
+
+@router.post('/balance/withdraw')
+async def deposit(balance_change: BalanceChangeScheme, admin: User = Depends(get_current_admin)):
+    user = await get_user(str(balance_change.user_id))
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if balance_change.ticker != os.getenv('BASE_INSTRUMENT_TICKER'):
+        instrument = await get_instrument_by_ticker(balance_change.ticker)
+        if not instrument:
+            raise HTTPException(status_code=404, detail="Instrument not found")
+
+    await change_balance(str(balance_change.user_id), balance_change.ticker, -1 * balance_change.amount)
+
+    return {
+        "success": True
+    }
+
+
+@router.post('/balance/withdraw')
+async def withdraw(instrument: InstrumentCreateRequest, user: User = Depends(get_current_admin)):
+    await create_instrument(instrument.name, instrument.ticker)
+    return {
+        "success": True
+    }
+
+
+@router.delete('/user/{user_id}')
+async def instrument(user_id: str, user: User = Depends(get_current_admin)):
+    deleted = await delete_user(user_id)
+    res = {
+        "id": deleted.id,
+        "name": deleted.name,
+        "role": deleted.role.name,
+        "api_key": deleted.api_key
+    }
+    return res
+
+
+@router.delete('/instrument/{ticker}')
+async def instrument(ticker: str, user: User = Depends(get_current_admin)):
+    deleted = await delete_instrument(ticker)
+    return {
+        "success": True
+    }
