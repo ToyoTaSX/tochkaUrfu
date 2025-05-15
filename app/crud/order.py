@@ -1,7 +1,7 @@
 import asyncio
 import os
 import uuid
-from typing import List
+from typing import List, Optional
 
 from sqlalchemy import select, asc, desc
 
@@ -14,12 +14,14 @@ from database.models import Order, DirectionEnum, User, OrderStatusEnum
 order_lock = asyncio.Lock()
 
 
-async def cancel_order(order_id: str, user_id: uuid.UUID) -> Order:
+async def cancel_order(order_id: str, user_id: uuid.UUID) -> Optional[Order]:
     async with order_lock:
         async with async_session_maker() as session:
             q = select(Order).where(Order.id == order_id, Order.user_id == user_id)
             result = await session.execute(q)
             order: Order = result.scalars().first()
+            if not Order:
+                return None
             if order.price is not None and order.status in [OrderStatusEnum.PARTIALLY_EXECUTED, OrderStatusEnum.NEW]:
                 if order.direction == DirectionEnum.BID:
                     await __change_balance(session, order.user_id, order.instrument_ticker, order.amount)
