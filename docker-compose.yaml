@@ -2,8 +2,8 @@ services:
   app:
     build: .
     container_name: fastapi_app
-    ports:
-      - "8000:8000"
+    expose:
+      - 8000
     depends_on:
       postgres:
         condition: service_healthy
@@ -42,8 +42,6 @@ services:
       POSTGRES_DB: tochka_db
     expose:
       - 5432
-    ports:
-      - "5432:5432"
     volumes:
       - ./postgres_data/:/var/lib/postgresql/data
     healthcheck:
@@ -58,6 +56,7 @@ services:
     ports:
       - "80:80"
       - "443:443"
+      - "5432:5432"
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
       - /etc/letsencrypt:/etc/letsencrypt:ro
