@@ -58,7 +58,8 @@ async def public_test(instrument: Instrument = Depends(get_instrument_depend), l
             "ticker": t.instrument_ticker,
             "amount": t.amount,
             "price": t.price,
-            "timestamp": "2025-05-15T18:46:51.821Z"
+            "timestamp": t.timestamp
         }
         for t in transactions
     ]
+    return transactions
