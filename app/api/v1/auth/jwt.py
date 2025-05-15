@@ -56,6 +56,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
         headers={"WWW-Authenticate": "TOKEN"},
     )
     try:
+        print(token)
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         id_: str = payload.get("id")
         if id_ is None:
