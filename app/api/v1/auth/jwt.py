@@ -63,7 +63,10 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
     except jwt.exceptions.PyJWTError as e:
         raise credentials_exception
 
-    return await get_user(id_)
+    user = await get_user(id_)
+    if user:
+        return user
+    raise credentials_exception
 
 async def get_current_admin(user: User = Depends(get_current_user)) -> User:
     if user.role != RoleEnum.ADMIN:
