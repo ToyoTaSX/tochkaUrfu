@@ -11,7 +11,7 @@ jobs:
 
     steps:
       - name: Fix file permissions before cleaning workspace
-        run: sudo chown -R $USER:$USER ${{ github.workspace }}
+        run: chown -R $USER:$USER ${{ github.workspace }}
 
       - name: Checkout repository
         uses: actions/checkout@v4
