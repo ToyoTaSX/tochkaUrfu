@@ -14,6 +14,7 @@ services:
       POSTGRES_HOST: postgres
       POSTGRES_PORT: "5432"
       POSTGRES_DB: "tochka_db"
+      SECRET_KEY: "ultra-secret-key"
 
 
   migrations:
