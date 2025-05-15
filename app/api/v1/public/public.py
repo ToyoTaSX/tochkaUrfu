@@ -1,13 +1,15 @@
 from fastapi import APIRouter, Depends
 from api.v1.auth.jwt import get_current_user, create_access_token, get_current_admin
+from depends import get_instrument_depend
 from .schemas import UserAuth
-from database.models import User, DirectionEnum
+from database.models import User, DirectionEnum, Instrument
 from crud.user import create_user
-from crud.instrument import get_all_instruments
+from crud.instrument import get_all_instruments, get_instrument_by_ticker
 from crud.order import get_orders
 from crud.transaction import get_transactions_by_ticker
 
 router = APIRouter()
+
 
 @router.post('/register')
 async def register(user: UserAuth):
@@ -29,7 +31,8 @@ async def public_test():
     } for i in await get_all_instruments()]
 
 @router.get('/orderbook/{ticker}')
-async def public_test(ticker: str, limit: int = 10):
+async def public_test(instrument: Instrument = Depends(get_instrument_depend), limit: int = 10):
+    ticker = instrument.ticker
     bid_orders = await get_orders(ticker, DirectionEnum.BID, limit=limit)
     bid_orders = [{
         "price": b.price,
@@ -47,19 +50,6 @@ async def public_test(ticker: str, limit: int = 10):
     }
 
 @router.get('/transactions/{ticker}')
-async def public_test(ticker: str, limit: int = 10):
+async def public_test(instrument: Instrument = Depends(get_instrument_depend), limit: int = 10):
+    ticker = instrument.ticker
     return await get_transactions_by_ticker(ticker, limit)
-
-
-
-@router.get('/public_test')
-async def public_test():
-    return "Public page"
-
-@router.get('/private_test')
-async def public_test(user: User = Depends(get_current_user)):
-    return user
-
-@router.get('/admin_test')
-async def public_test(user: User = Depends(get_current_admin)):
-    return user
