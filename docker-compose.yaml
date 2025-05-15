@@ -32,7 +32,7 @@ services:
     command: >
       sh -c "alembic revision --autogenerate && alembic upgrade head"
     volumes:
-      - ./docker-alembic/:/app/alembic/versions
+      - docker-alembic:/app/alembic/versions
 
   postgres:
     image: postgres:16-alpine
@@ -46,7 +46,7 @@ services:
     ports:
       - "5433:5432"
     volumes:
-      - ./postgres_data/:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 5s
@@ -65,5 +65,8 @@ services:
       - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       - app
+volumes:
+  docker-alembic:
+  postgres_data:
 
 
