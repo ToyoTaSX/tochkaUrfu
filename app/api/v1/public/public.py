@@ -52,4 +52,13 @@ async def public_test(instrument: Instrument = Depends(get_instrument_depend), l
 @router.get('/transactions/{ticker}')
 async def public_test(instrument: Instrument = Depends(get_instrument_depend), limit: int = 10):
     ticker = instrument.ticker
-    return await get_transactions_by_ticker(ticker, limit)
+    transactions = await get_transactions_by_ticker(ticker, limit)
+    transactions = [
+        {
+            "ticker": t.instrument_ticker,
+            "amount": t.amount,
+            "price": t.price,
+            "timestamp": "2025-05-15T18:46:51.821Z"
+        }
+        for t in transactions
+    ]

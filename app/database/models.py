@@ -73,6 +73,7 @@ class Transaction(Base):
     user_to_id = Column(UUID(as_uuid=True), ForeignKey('users.id', ondelete="SET NULL"), nullable=True)
     instrument_ticker = Column(String(10), ForeignKey('instruments.ticker', ondelete="SET NULL"), nullable=True)
     amount = Column(Float, nullable=False)
+    price = Column(Float, nullable=True)
     timestamp = Column(DateTime, default=datetime.utcnow)
 
     # Создаем отношения

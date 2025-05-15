@@ -21,13 +21,14 @@ async def get_transactions_by_ticker(ticker: str, limit: int = 10) -> List[Trans
 
         return transactions
 
-async def create_transaction(user_from_id:str, user_to_id: str, ticker: str, amount: int) -> Transaction:
+async def create_transaction(user_from_id:str, user_to_id: str, ticker: str, amount: int, price: float) -> Transaction:
     async with async_session_maker() as session:
         transaction = Transaction(
             user_from_id=user_from_id,
             user_to_id = user_to_id,
             instrument_ticker = ticker,
-            amount = amount
+            amount = amount,
+            price = price
         )
         session.add(transaction)
         await session.commit()
