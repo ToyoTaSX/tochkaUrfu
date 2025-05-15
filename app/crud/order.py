@@ -20,7 +20,7 @@ async def cancel_order(order_id: str, user_id: uuid.UUID) -> Optional[Order]:
             q = select(Order).where(Order.id == order_id, Order.user_id == user_id)
             result = await session.execute(q)
             order: Order = result.scalars().first()
-            if not Order:
+            if not order:
                 return None
             if order.price is not None and order.status in [OrderStatusEnum.PARTIALLY_EXECUTED, OrderStatusEnum.NEW]:
                 if order.direction == DirectionEnum.BID:
