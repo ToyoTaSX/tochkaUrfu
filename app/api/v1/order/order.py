@@ -5,7 +5,7 @@ from api.v1.order.schemas import CreateOrderScheme
 from crud.order import create_limit_sell_order, create_limit_buy_order, create_market_buy_order, \
     create_market_sell_order, cancel_order, get_order
 from crud.user import get_user_orders
-from database.models import User
+from database.models import User, OrderStatusEnum
 
 router = APIRouter()
 
@@ -35,6 +35,8 @@ async def order(order: CreateOrderScheme, user: User = Depends(get_current_user)
         order_ = await buy_order(order, user)
     elif order.direction == 'SELL':
         order_ = await sell_order(order, user)
+    if order_.status == OrderStatusEnum.CANCELLED:
+        raise HTTPException(400, detail=order_)
     return {
         "success": True,
         "order_id": str(order_.id)
