@@ -6,7 +6,8 @@ from api.v1.admin.schemas import InstrumentCreateRequest, BalanceChangeScheme
 from api.v1.auth.jwt import get_current_admin
 from crud.instrument import create_instrument, get_instrument_by_ticker, delete_instrument
 from crud.user import get_user, change_balance, delete_user
-from database.models import User
+from database.models import User, Instrument
+from depends import get_instrument_depend, get_user_depend
 
 router = APIRouter()
 
@@ -55,17 +56,10 @@ async def deposit(balance_change: BalanceChangeScheme, admin: User = Depends(get
     }
 
 
-@router.post('/balance/withdraw')
-async def withdraw(instrument: InstrumentCreateRequest, user: User = Depends(get_current_admin)):
-    await create_instrument(instrument.name, instrument.ticker)
-    return {
-        "success": True
-    }
-
 
 @router.delete('/user/{user_id}')
-async def instrument(user_id: str, user: User = Depends(get_current_admin)):
-    deleted = await delete_user(user_id)
+async def delete_user_met(user_to_delete: User = Depends(get_user_depend), admin: User = Depends(get_current_admin)):
+    deleted = await delete_user(str(user_to_delete.id))
     res = {
         "id": deleted.id,
         "name": deleted.name,
@@ -76,7 +70,8 @@ async def instrument(user_id: str, user: User = Depends(get_current_admin)):
 
 
 @router.delete('/instrument/{ticker}')
-async def instrument(ticker: str, user: User = Depends(get_current_admin)):
+async def instrument(instrument: Instrument = Depends(get_instrument_depend), user: User = Depends(get_current_admin)):
+    ticker = instrument.ticker
     deleted = await delete_instrument(ticker)
     return {
         "success": True
