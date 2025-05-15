@@ -30,9 +30,20 @@ async def public_test():
 
 @router.get('/orderbook/{ticker}')
 async def public_test(ticker: str, limit: int = 10):
+    bid_orders = await get_orders(ticker, DirectionEnum.BID, limit=limit)
+    bid_orders = [{
+        "price": b.price,
+        "qty": b.amount
+    } for b in bid_orders]
+
+    ask_orders = await get_orders(ticker, DirectionEnum.ASK, limit=limit)
+    ask_orders = [{
+        "price": a.price,
+        "qty": a.amount
+    } for a in ask_orders]
     return {
-        "bid_levels": await get_orders(ticker, DirectionEnum.BID, limit=limit),
-        "ask_levels": await get_orders(ticker, DirectionEnum.ASK, limit=limit)
+        "bid_levels": bid_orders,
+        "ask_levels": ask_orders
     }
 
 @router.get('/transactions/{ticker}')
