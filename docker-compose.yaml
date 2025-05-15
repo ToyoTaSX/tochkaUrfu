@@ -16,7 +16,7 @@ services:
       POSTGRES_DB: "tochka_db"
       SECRET_KEY: "ultra-secret-key"
       JWT_ALGORITHM: "HS256"
-      BASE_INSTRUMENT_TICKER: "RUR"
+      BASE_INSTRUMENT_TICKER: "RUB"
 
 
   migrations:
