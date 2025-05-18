@@ -45,7 +45,7 @@ async def delete_user(uuid_str: str) -> Optional[User]:
     async with async_session_maker() as session:
         user = await get_user(uuid_str)
         if not user:
-            raise HTTPException(status_code=404, detail='Пользователь с таким id е найден')
+            raise HTTPException(status_code=404, detail='Пользователь с таким id не найден')
         await session.delete(user)
         await session.commit()
         return user
