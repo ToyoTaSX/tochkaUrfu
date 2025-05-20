@@ -29,6 +29,8 @@ async def order(order_id: str, user: User = Depends(get_current_user)):
 @router.get('/{order_id}')
 async def order(order_id: str, user: User = Depends(get_current_user)):
     order = await get_order(order_id)
+    if order is None:
+        raise HTTPException(404)
     if order.user_id != user.id:
         raise HTTPException(403)
 
