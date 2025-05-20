@@ -23,9 +23,9 @@ async def cancel_order(order_id: str, user_id: uuid.UUID) -> Optional[Order]:
             if not order:
                 return None
             if order.price is not None and order.status in [OrderStatusEnum.PARTIALLY_EXECUTED, OrderStatusEnum.NEW]:
-                if order.direction == DirectionEnum.BID:
+                if order.direction == DirectionEnum.ASK:
                     await __change_balance(session, order.user_id, order.instrument_ticker, order.amount)
-                elif order.direction == DirectionEnum.ASK:
+                elif order.direction == DirectionEnum.BID:
                     await __change_balance(session, order.user_id, os.getenv('BASE_INSTRUMENT_TICKER'), order.amount * order.price)
             order.status = OrderStatusEnum.CANCELLED
             session.add(order)
@@ -113,6 +113,7 @@ async def create_limit_buy_order(ticker, qty, price, user: User):
                 else:
                     order.status = OrderStatusEnum.EXECUTED
                 order.amount -= c
+                order.filled += c
                 session.add(order)
             await __change_balance(session, user.id, ticker, total_add_ticker)
             await __change_balance(session, user.id, os.getenv('BASE_INSTRUMENT_TICKER'), total_add_balance)
@@ -122,6 +123,7 @@ async def create_limit_buy_order(ticker, qty, price, user: User):
             elif total_add_ticker != 0:
                 new_order.status = OrderStatusEnum.PARTIALLY_EXECUTED
             new_order.amount -= abs(total_add_ticker)
+            new_order.filled += abs(total_add_ticker)
 
             try:
                 await __change_balance(session, user.id, os.getenv('BASE_INSTRUMENT_TICKER'), -1 * new_order.amount * new_order.price)
@@ -129,6 +131,7 @@ async def create_limit_buy_order(ticker, qty, price, user: User):
                 await session.rollback()
                 new_order.status = OrderStatusEnum.CANCELLED
                 new_order.amount = qty
+                new_order.filled = 0
             session.add(new_order)
 
             await session.commit()
@@ -176,6 +179,7 @@ async def create_limit_sell_order(ticker, qty, price, user: User):
                 else:
                     o.status = OrderStatusEnum.EXECUTED
                 o.amount -= count_from_order
+                o.filled += count_from_order
                 session.add(o)
 
             await __change_balance(session, user.id, ticker, total_add_ticker)
@@ -186,12 +190,14 @@ async def create_limit_sell_order(ticker, qty, price, user: User):
             elif abs(total_add_ticker) != 0:
                 new_order.status = OrderStatusEnum.PARTIALLY_EXECUTED
             new_order.amount -= abs(total_add_ticker)
+            new_order.filled += abs(total_add_ticker)
             try:
                 await __change_balance(session, user.id, ticker, -1 * new_order.amount)
             except:
                 await session.rollback()
                 new_order.status = OrderStatusEnum.CANCELLED
                 new_order.amount = qty
+                new_order.filled = 0
 
             session.add(new_order)
             await session.commit()
@@ -249,6 +255,7 @@ async def create_market_buy_order(ticker, qty, user: User):
                 else:
                     order.status = OrderStatusEnum.EXECUTED
                 order.amount -= c
+                order.filled += c
                 session.add(order)
 
             await __change_balance(session, user.id, ticker, total_add_ticker)
@@ -256,6 +263,7 @@ async def create_market_buy_order(ticker, qty, user: User):
 
             new_order.status = OrderStatusEnum.EXECUTED
             new_order.amount -= abs(total_add_ticker)
+            new_order.filled += abs(total_add_ticker)
             session.add(new_order)
             await session.commit()
             await session.refresh(new_order)
@@ -300,12 +308,14 @@ async def create_market_sell_order(ticker, qty, user: User):
                 else:
                     o.status = OrderStatusEnum.EXECUTED
                 o.amount -= count_from_order
+                o.filled += count_from_order
                 session.add(o)
 
             await __change_balance(session, user.id, os.getenv('BASE_INSTRUMENT_TICKER'), total_add_balance)
             await __change_balance(session, user.id, ticker, total_add_ticker)
             new_order.status = OrderStatusEnum.EXECUTED
             new_order.amount -= abs(total_add_ticker)
+            new_order.filled += abs(total_add_ticker)
             session.add(new_order)
             await session.commit()
             await session.refresh(new_order)

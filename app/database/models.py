@@ -55,6 +55,7 @@ class Order(Base):
     user_id = Column(UUID(as_uuid=True), ForeignKey('users.id', ondelete="CASCADE"), nullable=False)
     instrument_ticker = Column(String(10), ForeignKey('instruments.ticker', ondelete="CASCADE"), nullable=False)
     amount = Column(Integer, nullable=False)
+    filled = Column(Integer, nullable=True, default=0)
     price = Column(Integer, nullable=True)
     direction = Column(Enum(DirectionEnum), nullable=False)
     status = Column(Enum(OrderStatusEnum), default=OrderStatusEnum.NEW)
