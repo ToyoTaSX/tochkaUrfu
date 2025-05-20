@@ -79,6 +79,7 @@ async def create_limit_buy_order(ticker, qty, price, user: User):
                 user_id=user.id,
                 instrument_ticker=ticker,
                 amount=qty,
+                filled=0,
                 price=price,
                 direction=DirectionEnum.BID,
                 status=OrderStatusEnum.NEW
@@ -147,6 +148,7 @@ async def create_limit_sell_order(ticker, qty, price, user: User):
                 user_id=user.id,
                 instrument_ticker=ticker,
                 amount=qty,
+                filled=0,
                 price=price,
                 direction=DirectionEnum.ASK,
                 status=OrderStatusEnum.NEW
@@ -213,6 +215,7 @@ async def create_market_buy_order(ticker, qty, user: User):
                 user_id=user.id,
                 instrument_ticker=ticker,
                 amount=qty,
+                filled=0,
                 price=None,
                 direction=DirectionEnum.BID,
                 status=OrderStatusEnum.NEW
@@ -278,6 +281,7 @@ async def create_market_sell_order(ticker, qty, user: User):
                 user_id=user.id,
                 instrument_ticker=ticker,
                 amount=qty,
+                filled=0,
                 price=None,
                 direction=DirectionEnum.ASK,
                 status=OrderStatusEnum.NEW
