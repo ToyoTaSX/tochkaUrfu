@@ -1,3 +1,5 @@
+import uuid
+
 from fastapi import HTTPException
 
 from crud.instrument import get_instrument_by_ticker
@@ -12,6 +14,12 @@ async def get_instrument_depend(ticker: str) -> Instrument:
     return instrument
 
 async def get_user_depend(user_id: str) -> User:
+    try:
+        uu = uuid.UUID(user_id)
+    except Exception as e:
+        print(e)
+        raise HTTPException(404)
+
     user = await get_user(user_id)
     if not user:
         raise HTTPException(404)
