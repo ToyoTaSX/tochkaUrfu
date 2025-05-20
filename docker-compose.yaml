@@ -1,5 +1,6 @@
 services:
   app:
+    user: runner
     build: .
     container_name: fastapi_app
     expose:
@@ -20,6 +21,7 @@ services:
 
 
   migrations:
+    user: runner
     build: .
     container_name: migrations_cont
     depends_on:
@@ -37,6 +39,7 @@ services:
       - docker-alembic:/app/alembic/versions
 
   postgres:
+    user: runner
     image: postgres:16-alpine
     container_name: postgres_db
     environment:
@@ -56,6 +59,7 @@ services:
       retries: 5
 
   nginx:
+    user: runner
     image: nginx:latest
     container_name: nginx_reverse_proxy
     ports:
