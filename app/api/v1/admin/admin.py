@@ -14,7 +14,7 @@ router = APIRouter()
 
 @router.post('/instrument')
 async def instrument(instrument: InstrumentCreateRequest, user: User = Depends(get_current_admin)):
-    instr = get_instrument_by_ticker(instrument.ticker)
+    instr = await get_instrument_by_ticker(instrument.ticker)
     if instr:
         raise HTTPException(422)
     await create_instrument(instrument.name, instrument.ticker)
