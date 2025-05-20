@@ -3,6 +3,7 @@ import os
 import uuid
 from typing import List, Optional
 
+from fastapi import HTTPException
 from sqlalchemy import select, asc, desc
 
 from crud.inventory import get_user_inventory
@@ -22,6 +23,10 @@ async def cancel_order(order_id: str, user_id: uuid.UUID) -> Optional[Order]:
             order: Order = result.scalars().first()
             if not order:
                 return None
+            if order.status in [OrderStatusEnum.PARTIALLY_EXECUTED, OrderStatusEnum.EXECUTED]:
+                raise HTTPException(400, 'Order executed/partially_executed')
+            if order.price is None:
+                raise HTTPException(400, 'Order is market')
             if order.price is not None and order.status in [OrderStatusEnum.PARTIALLY_EXECUTED, OrderStatusEnum.NEW]:
                 if order.direction == DirectionEnum.ASK:
                     await __change_balance(session, order.user_id, order.instrument_ticker, order.amount)
