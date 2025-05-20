@@ -38,7 +38,7 @@ async def order(order_id: str, user: User = Depends(get_current_user)):
         "id": order.id,
         "status": order.status.value,
         "user_id": order.user_id,
-        "timestamp": f"{order.created_at}"[:-3] + 'Z',
+        "timestamp": order.created_at,
         "body": {
             "direction": "BUY" if order.direction == DirectionEnum.BID else 'SELL',
             "ticker": order.instrument_ticker,
