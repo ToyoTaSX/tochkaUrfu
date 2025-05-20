@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from api.v1.auth.jwt import get_current_user
 from api.v1.order.schemas import CreateOrderScheme
+from crud.instrument import get_instrument_by_ticker
 from crud.order import create_limit_sell_order, create_limit_buy_order, create_market_buy_order, \
     create_market_sell_order, cancel_order, get_order
 from crud.user import get_user_orders
@@ -33,6 +34,9 @@ async def order(order_id: str, user: User = Depends(get_current_user)):
 @router.post('')
 async def order(order: CreateOrderScheme, user: User = Depends(get_current_user)):
     order_ = None
+    instrument = await get_instrument_by_ticker(order.ticker)
+    if not instrument:
+        raise HTTPException(404, detail='ticker unexist')
     if order.direction == 'BUY':
         order_ = await buy_order(order, user)
     elif order.direction == 'SELL':
