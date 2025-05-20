@@ -55,7 +55,7 @@ async def __get_orders(session, ticker: str, direction: DirectionEnum, limit: in
             Order.status.in_([OrderStatusEnum.NEW, OrderStatusEnum.PARTIALLY_EXECUTED])
         )
         .order_by(
-            asc(Order.price) if direction == DirectionEnum.BID else desc(Order.price),
+            desc(Order.price) if direction == DirectionEnum.BID else asc(Order.price),
             Order.created_at
         )
         .limit(limit)
@@ -74,13 +74,13 @@ async def __get_orders(session, ticker: str, direction: DirectionEnum, limit: in
 async def create_limit_buy_order(ticker, qty, price, user: User):
     async with order_lock:
         async with async_session_maker() as session:
-            orderbook = await __get_orders(session, ticker, DirectionEnum.BID, qty)
+            orderbook = await __get_orders(session, ticker, DirectionEnum.ASK, qty)
             new_order = Order(
                 user_id=user.id,
                 instrument_ticker=ticker,
                 amount=qty,
                 price=price,
-                direction=DirectionEnum.ASK,
+                direction=DirectionEnum.BID,
                 status=OrderStatusEnum.NEW
             )
             count_to_buy = qty
@@ -139,13 +139,13 @@ async def create_limit_buy_order(ticker, qty, price, user: User):
 async def create_limit_sell_order(ticker, qty, price, user: User):
     async with order_lock:
         async with async_session_maker() as session:
-            orderbook = await __get_orders(session, ticker, DirectionEnum.ASK, qty)
+            orderbook = await __get_orders(session, ticker, DirectionEnum.BID, qty)
             new_order = Order(
                 user_id=user.id,
                 instrument_ticker=ticker,
                 amount=qty,
                 price=price,
-                direction=DirectionEnum.BID,
+                direction=DirectionEnum.ASK,
                 status=OrderStatusEnum.NEW
             )
             inventory = (await get_user_inventory(user.id, ticker))[0]
@@ -202,13 +202,13 @@ async def create_limit_sell_order(ticker, qty, price, user: User):
 async def create_market_buy_order(ticker, qty, user: User):
     async with order_lock:
         async with async_session_maker() as session:
-            orderbook = await __get_orders(session, ticker, DirectionEnum.BID, qty)
+            orderbook = await __get_orders(session, ticker, DirectionEnum.ASK, qty)
             new_order = Order(
                 user_id=user.id,
                 instrument_ticker=ticker,
                 amount=qty,
                 price=None,
-                direction=DirectionEnum.ASK,
+                direction=DirectionEnum.BID,
                 status=OrderStatusEnum.NEW
             )
             if sum(o.amount for o in orderbook) < qty:
@@ -271,7 +271,7 @@ async def create_market_sell_order(ticker, qty, user: User):
                 instrument_ticker=ticker,
                 amount=qty,
                 price=None,
-                direction=DirectionEnum.BID,
+                direction=DirectionEnum.ASK,
                 status=OrderStatusEnum.NEW
             )
             inventory = (await get_user_inventory(user.id, ticker))[0]
