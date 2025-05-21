@@ -2,7 +2,8 @@ import os
 
 from fastapi import APIRouter, Depends
 
-from database.models import User
+from crud.user import get_user_orders
+from database.models import User, OrderStatusEnum, DirectionEnum
 from .public.public import router as public_router
 from .admin.admin import router as admin_router
 from .order.order import router as order_router
@@ -19,4 +20,14 @@ async def balance(user: User = Depends(get_current_user)):
     inv = await get_user_inventory(user.id)
     result = {i.instrument_ticker: i.quantity for i in inv}
     result[os.getenv('BASE_INSTRUMENT_TICKER')] = user.balance
+    orders = await get_user_orders(str(user.id))
+    for o in orders:
+        if o.status in [OrderStatusEnum.NEW, OrderStatusEnum.PARTIALLY_EXECUTED]:
+            if o.direction == DirectionEnum.ASK:
+                # Ордер на продажу
+                result[o.instrument_ticker] += o.amount
+            elif o.direction == DirectionEnum.BID:
+                # Ордер на покупку
+                result[os.getenv('BASE_INSTRUMENT_TICKER')] += o.amount * o.price
+
     return result
