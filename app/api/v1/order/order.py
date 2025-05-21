@@ -1,3 +1,4 @@
+import uuid
 from datetime import timezone
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -30,6 +31,12 @@ async def order(order_id: str, user: User = Depends(get_current_user)):
 
 @router.get('/{order_id}')
 async def order(order_id: str, user: User = Depends(get_current_user)):
+    try:
+        uu = uuid.UUID(order_id)
+    except Exception as e:
+        print(e)
+        raise HTTPException(404)
+
     order = await get_order(order_id)
     if order is None:
         raise HTTPException(404)
