@@ -13,13 +13,8 @@ async def get_instrument_depend(ticker: str) -> Instrument:
         raise HTTPException(404)
     return instrument
 
-async def get_user_depend(user_id: str) -> User:
-    try:
-        uu = uuid.UUID(user_id)
-    except Exception as e:
-        print(e)
-        raise HTTPException(404)
-
+async def get_user_depend(user_id: uuid.UUID) -> User:
+    user_id = str(user_id)
     user = await get_user(user_id)
     if not user:
         raise HTTPException(404)

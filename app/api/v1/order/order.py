@@ -20,12 +20,8 @@ async def order(user: User = Depends(get_current_user)):
 
 
 @router.delete('/{order_id}')
-async def order(order_id: str, user: User = Depends(get_current_user)):
-    try:
-        uu = uuid.UUID(order_id)
-    except Exception as e:
-        print(e)
-        raise HTTPException(404)
+async def order(order_id: uuid.UUID, user: User = Depends(get_current_user)):
+    order_id = str(order_id)
     canceled = await cancel_order(order_id, user.id)
     if not canceled:
         raise HTTPException(404, detail='order not found')
@@ -35,13 +31,8 @@ async def order(order_id: str, user: User = Depends(get_current_user)):
 
 
 @router.get('/{order_id}')
-async def order(order_id: str, user: User = Depends(get_current_user)):
-    try:
-        uu = uuid.UUID(order_id)
-    except Exception as e:
-        print(e)
-        raise HTTPException(404)
-
+async def order(order_id: uuid.UUID, user: User = Depends(get_current_user)):
+    order_id = str(order_id)
     order = await get_order(order_id)
     if order is None:
         raise HTTPException(404)
