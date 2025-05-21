@@ -53,7 +53,7 @@ async def get_orders(ticker: str, direction: DirectionEnum, limit: int = 10) -> 
 async def __get_orders(session, ticker: str, direction: DirectionEnum, limit: int = 10) -> List[Order]:
     q = (
         select(Order)
-        .join(Order.instrument)
+        #.join(Order.instrument)
         .filter(
             Order.instrument_ticker == ticker,
             Order.direction == direction.name,
