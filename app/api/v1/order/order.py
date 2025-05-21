@@ -42,12 +42,9 @@ async def order(order_id: str, user: User = Depends(get_current_user)):
         raise HTTPException(404)
     if order.user_id != user.id:
         raise HTTPException(403)
+
     your_datetime = order.created_at
-
-    # Убедись, что datetime в UTC:
     datetime_utc = your_datetime.astimezone(timezone.utc)
-
-    # Получаем строку нужного формата:
     formatted_timestamp = datetime_utc.isoformat(timespec='milliseconds').replace('+00:00', 'Z')
     return {
         "id": order.id,

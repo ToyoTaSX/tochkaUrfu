@@ -1,3 +1,5 @@
+from datetime import timezone
+
 from fastapi import APIRouter, Depends
 from api.v1.auth.jwt import get_current_user, create_access_token, get_current_admin
 from depends import get_instrument_depend
@@ -58,7 +60,7 @@ async def public_test(instrument: Instrument = Depends(get_instrument_depend), l
             "ticker": t.instrument_ticker,
             "amount": t.amount,
             "price": t.price,
-            "timestamp": t.timestamp
+            "timestamp": t.timestamp.astimezone(timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
         }
         for t in transactions
     ]
