@@ -70,7 +70,6 @@ async def order(order: CreateOrderScheme, user: User = Depends(get_current_user)
         order_ = await sell_order(order, user)
     if order_.status == OrderStatusEnum.CANCELLED:
         raise HTTPException(422, detail='ORDER CANCELLED')
-    time.sleep(1)
     return {
         "success": True,
         "order_id": str(order_.id)
