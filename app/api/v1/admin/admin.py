@@ -62,6 +62,7 @@ async def deposit(balance_change: BalanceChangeScheme, admin: User = Depends(get
 
 @router.delete('/user/{user_id}')
 async def delete_user_met(user_to_delete: User = Depends(get_user_depend), admin: User = Depends(get_current_admin)):
+    print('delete user ', user_to_delete.id)
     deleted = await delete_user(str(user_to_delete.id))
     res = {
         "id": deleted.id,
