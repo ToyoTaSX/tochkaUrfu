@@ -1,6 +1,7 @@
 import time
 import uuid
 from datetime import timezone
+from pprint import pprint
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -25,7 +26,11 @@ async def order(order_id: uuid.UUID, user: User = Depends(get_current_user)):
     order_id = str(order_id)
     canceled = await cancel_order(order_id, user.id)
     if not canceled:
+        print(
+            f'{user.name} -- canceled delete order')
         raise HTTPException(404, detail='order not found')
+    print(f'{user.name} delete order')
+    pprint(canceled)
     return {
         "success": True
     }
@@ -70,6 +75,9 @@ async def order(order: CreateOrderScheme, user: User = Depends(get_current_user)
         order_ = await sell_order(order, user)
     if order_.status == OrderStatusEnum.CANCELLED:
         raise HTTPException(422, detail='ORDER CANCELLED')
+    print(f'{user.name} create order')
+    pprint(order)
+    
     return {
         "success": True,
         "order_id": str(order_.id)
