@@ -38,7 +38,7 @@ async def cancel_order(order_id: str, user_id: uuid.UUID) -> Optional[Order]:
             await session.refresh(order)
             return order
 
-async def get_order(order_id: str) -> Order:
+async def get_order(order_id: str) -> Optional[Order]:
     async with async_session_maker() as session:
         q = select(Order).where(Order.id == order_id)
         result = await session.execute(q)
