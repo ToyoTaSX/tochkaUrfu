@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import HTTPException
 
 from sqlalchemy import select
@@ -22,7 +24,7 @@ async def create_instrument(name: str, ticker: str) -> Instrument:
         await session.refresh(new_instrument)
         return new_instrument
 
-async def get_instrument_by_ticker(ticker: str) -> Instrument:
+async def get_instrument_by_ticker(ticker: str) -> Optional[Instrument]:
     async with async_session_maker() as session:
         query = select(Instrument).where(Instrument.ticker == ticker)
         result = await session.execute(query)
