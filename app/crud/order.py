@@ -50,13 +50,9 @@ async def get_order(order_id: str) -> Optional[Order]:
 
 
 async def get_orders(ticker: str, direction: DirectionEnum, limit: int = 10) -> List[Order]:
-    if ticker not in locks:
-        locks[ticker] = asyncio.Lock()
-    order_lock = locks[ticker]
-    async with order_lock:
-        async with async_session_maker() as session:
-            async with session.begin():
-                return await __get_orders(session, ticker, direction, limit)
+    async with async_session_maker() as session:
+        async with session.begin():
+            return await __get_orders(session, ticker, direction, limit)
 
 
 async def __get_orders(session, ticker: str, direction: DirectionEnum, limit: int = 10) -> List[Order]:
