@@ -10,7 +10,14 @@ postgres_port = os.getenv("POSTGRES_PORT")
 postgres_db = os.getenv("POSTGRES_DB")
 DATABASE_URL = f'postgresql+asyncpg://{postgres_user}:{postgres_password}@{postgres_host}:{postgres_port}/{postgres_db}'
 print(DATABASE_URL)
-engine = create_async_engine(DATABASE_URL, echo=False)
+engine = create_async_engine(
+    DATABASE_URL,
+    echo=False,
+    pool_size=20,
+    max_overflow=50,
+    pool_recycle=3600,
+    pool_pre_ping=True
+)
 async_session_maker = async_sessionmaker(engine, expire_on_commit=False)
 
 Base = declarative_base()
