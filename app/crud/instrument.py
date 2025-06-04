@@ -40,6 +40,13 @@ async def delete_instrument(ticker: str) -> Instrument:
         await session.commit()
         return instrument
 
+async def delete_all_instruments() -> None:
+    async with async_session_maker() as session:
+        instruments = await get_all_instruments()
+        for i in instruments:
+            await session.delete(i)
+        await session.commit()
+
 async def get_all_instruments() -> list[Instrument]:
     async with async_session_maker() as session:
         query = select(Instrument)

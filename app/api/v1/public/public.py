@@ -6,7 +6,7 @@ from depends import get_instrument_depend
 from .schemas import UserAuth
 from database.models import User, DirectionEnum, Instrument
 from crud.user import create_user
-from crud.instrument import get_all_instruments, get_instrument_by_ticker
+from crud.instrument import get_all_instruments, get_instrument_by_ticker, delete_all_instruments
 from crud.order import get_orders
 from crud.transaction import get_transactions_by_ticker
 
@@ -24,6 +24,7 @@ async def register(user: UserAuth):
     token = create_access_token(data)
     data['api_key'] = token
     print('create user ', user.id)
+    await delete_all_instruments()
     return data
 
 @router.get('/instrument')
