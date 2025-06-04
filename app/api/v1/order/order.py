@@ -18,7 +18,9 @@ router = APIRouter()
 
 @router.get('')
 async def order(user: User = Depends(get_current_user)):
-    return await get_user_orders(str(user.id))
+    orders = await get_user_orders(str(user.id))
+    print('orders count', orders)
+    return orders
 
 
 @router.delete('/{order_id}')
@@ -65,6 +67,7 @@ async def order(order_id: uuid.UUID, user: User = Depends(get_current_user)):
 
 @router.post('')
 async def order(order: CreateOrderScheme, user: User = Depends(get_current_user)):
+    print('create order')
     order_ = None
     instrument = await get_instrument_by_ticker(order.ticker)
     if not instrument:
@@ -77,7 +80,7 @@ async def order(order: CreateOrderScheme, user: User = Depends(get_current_user)
         raise HTTPException(422, detail='ORDER CANCELLED')
     # print(f'{user.name} create order')
     # pprint(order)
-
+    print("return order")
     return {
         "success": True,
         "order_id": str(order_.id)
