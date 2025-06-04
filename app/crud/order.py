@@ -151,14 +151,20 @@ async def create_limit_buy_order(ticker, qty, price, user: User):
                     await session.rollback()
                     async with async_session_maker() as new_session:
                         async with new_session.begin():
-                            new_order.status = OrderStatusEnum.CANCELLED
-                            new_order.amount = qty
-                            new_order.filled = 0
-                            new_session.add(new_order)
+                            canceled = Order(
+                                user_id=user.id,
+                                instrument_ticker=ticker,
+                                amount=qty,
+                                filled=0,
+                                price=price,
+                                direction=DirectionEnum.BID,
+                                status=OrderStatusEnum.CANCELLED
+                            )
+                            new_session.add(canceled)
 
                             await new_session.commit()
-                            await new_session.refresh(new_order)
-                            return new_order
+                            await new_session.refresh(canceled)
+                            return canceled
 
 
 
@@ -229,13 +235,19 @@ async def create_limit_sell_order(ticker, qty, price, user: User):
                     await session.rollback()
                     async with async_session_maker() as new_session:
                         async with new_session.begin():
-                            new_order.status = OrderStatusEnum.CANCELLED
-                            new_order.amount = qty
-                            new_order.filled = 0
-                            new_session.add(new_order)
+                            canceled = Order(
+                                user_id=user.id,
+                                instrument_ticker=ticker,
+                                amount=qty,
+                                filled=0,
+                                price=price,
+                                direction=DirectionEnum.ASK,
+                                status=OrderStatusEnum.CANCELLED
+                            )
+                            new_session.add(canceled)
                             await new_session.commit()
-                            await new_session.refresh(new_order)
-                            return new_order
+                            await new_session.refresh(canceled)
+                            return canceled
 
 
 
