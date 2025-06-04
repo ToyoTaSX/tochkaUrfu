@@ -142,16 +142,24 @@ async def create_limit_buy_order(ticker, qty, price, user: User):
 
                 try:
                     await __change_balance(session, user.id, os.getenv('BASE_INSTRUMENT_TICKER'), -1 * new_order.amount * new_order.price)
+                    session.add(new_order)
+
+                    await session.commit()
+                    await session.refresh(new_order)
+                    return new_order
                 except:
                     await session.rollback()
-                    new_order.status = OrderStatusEnum.CANCELLED
-                    new_order.amount = qty
-                    new_order.filled = 0
-                session.add(new_order)
+                    async with async_session_maker() as new_session:
+                        async with new_session.begin():
+                            new_order.status = OrderStatusEnum.CANCELLED
+                            new_order.amount = qty
+                            new_order.filled = 0
+                            new_session.add(new_order)
 
-                await session.commit()
-                await session.refresh(new_order)
-                return new_order
+                            await new_session.commit()
+                            await new_session.refresh(new_order)
+                            return new_order
+
 
 
 async def create_limit_sell_order(ticker, qty, price, user: User):
@@ -213,16 +221,22 @@ async def create_limit_sell_order(ticker, qty, price, user: User):
                 new_order.filled += abs(total_add_ticker)
                 try:
                     await __change_balance(session, user.id, ticker, -1 * new_order.amount)
+                    session.add(new_order)
+                    await session.commit()
+                    await session.refresh(new_order)
+                    return new_order
                 except:
                     await session.rollback()
-                    new_order.status = OrderStatusEnum.CANCELLED
-                    new_order.amount = qty
-                    new_order.filled = 0
+                    async with async_session_maker() as new_session:
+                        async with new_session.begin():
+                            new_order.status = OrderStatusEnum.CANCELLED
+                            new_order.amount = qty
+                            new_order.filled = 0
+                            new_session.add(new_order)
+                            await new_session.commit()
+                            await new_session.refresh(new_order)
+                            return new_order
 
-                session.add(new_order)
-                await session.commit()
-                await session.refresh(new_order)
-                return new_order
 
 
 async def create_market_buy_order(ticker, qty, user: User):
