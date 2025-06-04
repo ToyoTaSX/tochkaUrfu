@@ -37,8 +37,9 @@ async def cancel_order(order_id: str, user_id: uuid.UUID) -> Optional[Order]:
                         await __change_balance(session, order.user_id, os.getenv('BASE_INSTRUMENT_TICKER'), order.amount * order.price)
                 order.status = OrderStatusEnum.CANCELLED
                 session.add(order)
-                await session.commit()
+                await session.flush()  # гарантирует, что объект вставлен, но транзакция ещё не зафиксирована
                 await session.refresh(order)
+                await session.commit()
                 return order
 
 async def get_order(order_id: str) -> Optional[Order]:
@@ -145,8 +146,9 @@ async def create_limit_buy_order(ticker, qty, price, user: User):
                     await __change_balance(session, user_id, os.getenv('BASE_INSTRUMENT_TICKER'), -1 * new_order.amount * new_order.price)
                     session.add(new_order)
 
-                    await session.commit()
+                    await session.flush()  # гарантирует, что объект вставлен, но транзакция ещё не зафиксирована
                     await session.refresh(new_order)
+                    await session.commit()
                     return new_order
                 except:
                     await session.rollback()
@@ -193,8 +195,9 @@ async def create_limit_sell_order(ticker, qty, price, user: User):
                 if inventory.quantity < qty:
                     new_order.status = OrderStatusEnum.CANCELLED
                     session.add(new_order)
-                    await session.commit()
+                    await session.flush()  # гарантирует, что объект вставлен, но транзакция ещё не зафиксирована
                     await session.refresh(new_order)
+                    await session.commit()
                     return new_order
 
                 count_to_sell = qty
@@ -232,8 +235,9 @@ async def create_limit_sell_order(ticker, qty, price, user: User):
                 try:
                     await __change_balance(session, user_id, ticker, -1 * new_order.amount)
                     session.add(new_order)
-                    await session.commit()
+                    await session.flush()  # гарантирует, что объект вставлен, но транзакция ещё не зафиксирована
                     await session.refresh(new_order)
+                    await session.commit()
                     return new_order
                 except:
                     await session.rollback()
@@ -278,8 +282,9 @@ async def create_market_buy_order(ticker, qty, user: User):
                 if sum(o.amount for o in orderbook) < qty:
                     new_order.status = OrderStatusEnum.CANCELLED
                     session.add(new_order)
-                    await session.commit()
+                    await session.flush()  # гарантирует, что объект вставлен, но транзакция ещё не зафиксирована
                     await session.refresh(new_order)
+                    await session.commit()
                     return new_order
 
                 need_money = 0
@@ -290,8 +295,9 @@ async def create_market_buy_order(ticker, qty, user: User):
                     if balance < need_money:
                         new_order.status = OrderStatusEnum.CANCELLED
                         session.add(new_order)
-                        await session.commit()
+                        await session.flush()  # гарантирует, что объект вставлен, но транзакция ещё не зафиксирована
                         await session.refresh(new_order)
+                        await session.commit()
                         return new_order
 
                     if count_to_buy == 0:
@@ -323,8 +329,9 @@ async def create_market_buy_order(ticker, qty, user: User):
                 new_order.amount -= abs(total_add_ticker)
                 new_order.filled += abs(total_add_ticker)
                 session.add(new_order)
-                await session.commit()
+                await session.flush()  # гарантирует, что объект вставлен, но транзакция ещё не зафиксирована
                 await session.refresh(new_order)
+                await session.commit()
                 return new_order
 
 
@@ -350,8 +357,9 @@ async def create_market_sell_order(ticker, qty, user: User):
                 if sum(o.amount for o in orderbook) < qty or inventory.quantity < qty:
                     new_order.status = OrderStatusEnum.CANCELLED
                     session.add(new_order)
-                    await session.commit()
+                    await session.flush()  # гарантирует, что объект вставлен, но транзакция ещё не зафиксирована
                     await session.refresh(new_order)
+                    await session.commit()
                     return new_order
 
                 count_to_sell = qty
@@ -381,8 +389,9 @@ async def create_market_sell_order(ticker, qty, user: User):
                 new_order.amount -= abs(total_add_ticker)
                 new_order.filled += abs(total_add_ticker)
                 session.add(new_order)
-                await session.commit()
+                await session.flush()  # гарантирует, что объект вставлен, но транзакция ещё не зафиксирована
                 await session.refresh(new_order)
+                await session.commit()
                 return new_order
 
 
