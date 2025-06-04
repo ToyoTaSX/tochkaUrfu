@@ -82,6 +82,7 @@ async def __get_orders(session, ticker: str, direction: DirectionEnum, limit: in
 
 
 async def create_limit_buy_order(ticker, qty, price, user: User):
+    user_id = user.id
     if ticker not in locks:
         locks[ticker] = asyncio.Lock()
     order_lock = locks[ticker]
@@ -153,7 +154,7 @@ async def create_limit_buy_order(ticker, qty, price, user: User):
         async with async_session_maker() as new_session:
             async with new_session.begin():
                 canceled = Order(
-                    user_id=user.id,
+                    user_id=user_id,
                     instrument_ticker=ticker,
                     amount=qty,
                     filled=0,
@@ -173,6 +174,7 @@ async def create_limit_sell_order(ticker, qty, price, user: User):
     if ticker not in locks:
         locks[ticker] = asyncio.Lock()
     order_lock = locks[ticker]
+    user_id = user.id
     async with order_lock:
         async with async_session_maker() as session:
             async with session.begin():
@@ -234,11 +236,11 @@ async def create_limit_sell_order(ticker, qty, price, user: User):
                     return new_order
                 except:
                     await session.rollback()
-                    
+
         async with async_session_maker() as new_session:
             async with new_session.begin():
                 canceled = Order(
-                    user_id=user.id,
+                    user_id=user_id,
                     instrument_ticker=ticker,
                     amount=qty,
                     filled=0,
