@@ -164,8 +164,9 @@ async def create_limit_buy_order(ticker, qty, price, user: User):
                 )
                 new_session.add(canceled)
 
-                await new_session.commit()
+                await new_session.flush()  # гарантирует, что объект вставлен, но транзакция ещё не зафиксирована
                 await new_session.refresh(canceled)
+                await new_session.commit()
                 return canceled
 
 
@@ -249,8 +250,9 @@ async def create_limit_sell_order(ticker, qty, price, user: User):
                     status=OrderStatusEnum.CANCELLED
                 )
                 new_session.add(canceled)
-                await new_session.commit()
+                await new_session.flush()  # гарантирует, что объект вставлен, но транзакция ещё не зафиксирована
                 await new_session.refresh(canceled)
+                await new_session.commit()
                 return canceled
 
 
