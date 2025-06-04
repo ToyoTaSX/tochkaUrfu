@@ -80,7 +80,7 @@ async def __change_balance(session, id: [uuid.UUID, str], ticker: str, amount: i
                 session.add(inv)
                 break
 
-    await session.commit()
+    #await session.commit()
     return user
 
 
