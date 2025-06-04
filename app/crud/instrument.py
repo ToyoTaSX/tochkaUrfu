@@ -41,11 +41,10 @@ async def delete_instrument(ticker: str) -> Instrument:
         return instrument
 
 async def delete_all_instruments() -> None:
-    async with async_session_maker() as session:
-        instruments = await get_all_instruments()
-        for i in instruments:
-            await session.delete(i)
-        await session.commit()
+    instruments = await get_all_instruments()
+    for i in instruments:
+        await delete_instrument(i.ticker)
+
 
 async def get_all_instruments() -> list[Instrument]:
     async with async_session_maker() as session:
