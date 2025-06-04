@@ -7,7 +7,7 @@ from fastapi import HTTPException
 from sqlalchemy import select, asc, desc
 
 from crud.inventory import get_user_inventory
-from crud.transaction import create_transaction
+from crud.transaction import __create_transaction
 from crud.user import __change_balance
 from database.database import async_session_maker
 from database.models import Order, DirectionEnum, User, OrderStatusEnum
@@ -122,7 +122,7 @@ async def create_limit_buy_order(ticker, qty, price, user: User):
                     await __change_balance(session, order.user_id, os.getenv('BASE_INSTRUMENT_TICKER'), c * order.price)
                     total_add_balance += -1 * c * order.price
                     total_add_ticker += c
-                    await create_transaction(order.user_id, user.id, order.instrument_ticker, o.amount, o.price)
+                    await __create_transaction(session, order.user_id, user.id, order.instrument_ticker, c, o.price)
                     if order.amount > c:
                         order.status = OrderStatusEnum.PARTIALLY_EXECUTED
                     else:
@@ -193,7 +193,7 @@ async def create_limit_sell_order(ticker, qty, price, user: User):
                     total_add_ticker -= count_from_order
                     total_add_balance += count_from_order * o.price
                     await __change_balance(session, o.user_id, ticker, count_from_order)
-                    await create_transaction(user.id, o.user_id, o.instrument_ticker, count_to_sell, o.price)
+                    await __create_transaction(session, user.id, o.user_id, o.instrument_ticker, count_to_sell, o.price)
                     if o.amount > count_from_order:
                         o.status = OrderStatusEnum.PARTIALLY_EXECUTED
                     else:
@@ -274,7 +274,7 @@ async def create_market_buy_order(ticker, qty, user: User):
                     await __change_balance(session, order.user_id, os.getenv('BASE_INSTRUMENT_TICKER'), c * order.price)
                     total_add_balance += -1 * c * order.price
                     total_add_ticker += c
-                    await create_transaction(o.user_id, user.id, o.instrument_ticker, c, o.price)
+                    await __create_transaction(session, o.user_id, user.id, o.instrument_ticker, c, o.price)
                     if order.amount > c:
                         order.status = OrderStatusEnum.PARTIALLY_EXECUTED
                     else:
@@ -332,7 +332,7 @@ async def create_market_sell_order(ticker, qty, user: User):
                     await __change_balance(session, o.user_id, ticker, count_from_order)
                     total_add_balance += count_from_order * o.price
                     total_add_ticker += -1 * count_from_order
-                    await create_transaction(user.id, o.user_id, o.instrument_ticker, count_from_order, o.price)
+                    await __create_transaction(session, user.id, o.user_id, o.instrument_ticker, count_from_order, o.price)
                     if o.amount > count_from_order:
                         o.status = OrderStatusEnum.PARTIALLY_EXECUTED
                     else:
