@@ -76,8 +76,8 @@ async def order(order: CreateOrderScheme, user: User = Depends(get_current_user)
         order_ = await buy_order(order, user)
     elif order.direction == 'SELL':
         order_ = await sell_order(order, user)
-    if order_.status == OrderStatusEnum.CANCELLED:
-        raise HTTPException(422, detail='ORDER CANCELLED')
+    # if order_.status == OrderStatusEnum.CANCELLED:
+    #     raise HTTPException(422, detail='ORDER CANCELLED')
     # print(f'{user.name} create order')
     # pprint(order)
     print("return order")
