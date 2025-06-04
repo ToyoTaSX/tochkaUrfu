@@ -63,7 +63,9 @@ async def change_balance(id: [uuid.UUID, str], ticker: str, amount: int) -> Opti
 async def __change_balance(session, id: [uuid.UUID, str], ticker: str, amount: int) -> Optional[User]:
     id = str(id)
     if ticker == os.getenv('BASE_INSTRUMENT_TICKER'):
-        user = await get_user(id)
+        user = await session.get(User, uuid.UUID(id))
+        if user is None:
+            user = await get_user(id)
         new_balance = user.balance + amount
         if new_balance < 0:
             raise HTTPException(status_code=400, detail='Balance must be >= 0')
