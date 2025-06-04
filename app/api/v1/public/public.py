@@ -24,7 +24,6 @@ async def register(user: UserAuth):
     token = create_access_token(data)
     data['api_key'] = token
     print('create user ', user.id)
-    await delete_all_instruments()
     return data
 
 @router.get('/instrument')
