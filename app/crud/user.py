@@ -49,7 +49,7 @@ async def delete_user(uuid_str: str) -> Optional[User]:
             raise HTTPException(status_code=404, detail='Пользователь с таким id не найден')
         await session.delete(user)
         await session.commit()
-        await asyncio.sleep(1)
+        #await asyncio.sleep(1)
         return user
 
 async def change_balance(id: [uuid.UUID, str], ticker: str, amount: int) -> Optional[User]:
