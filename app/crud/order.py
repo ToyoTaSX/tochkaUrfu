@@ -91,7 +91,7 @@ async def create_limit_buy_order(ticker, qty, price, user: User):
             async with session.begin():
                 orderbook = await __get_orders(session, ticker, DirectionEnum.ASK, qty)
                 new_order = Order(
-                    user_id=user.id,
+                    user_id=user_id,
                     instrument_ticker=ticker,
                     amount=qty,
                     filled=0,
@@ -123,7 +123,7 @@ async def create_limit_buy_order(ticker, qty, price, user: User):
                     await __change_balance(session, order.user_id, os.getenv('BASE_INSTRUMENT_TICKER'), c * order.price)
                     total_add_balance += -1 * c * order.price
                     total_add_ticker += c
-                    await __create_transaction(session, order.user_id, user.id, order.instrument_ticker, c, o.price)
+                    await __create_transaction(session, order.user_id, user_id, order.instrument_ticker, c, o.price)
                     if order.amount > c:
                         order.status = OrderStatusEnum.PARTIALLY_EXECUTED
                     else:
@@ -131,8 +131,8 @@ async def create_limit_buy_order(ticker, qty, price, user: User):
                     order.amount -= c
                     order.filled += c
                     session.add(order)
-                await __change_balance(session, user.id, ticker, total_add_ticker)
-                await __change_balance(session, user.id, os.getenv('BASE_INSTRUMENT_TICKER'), total_add_balance)
+                await __change_balance(session, user_id, ticker, total_add_ticker)
+                await __change_balance(session, user_id, os.getenv('BASE_INSTRUMENT_TICKER'), total_add_balance)
 
                 if total_add_ticker == qty:
                     new_order.status = OrderStatusEnum.EXECUTED
@@ -142,7 +142,7 @@ async def create_limit_buy_order(ticker, qty, price, user: User):
                 new_order.filled += abs(total_add_ticker)
 
                 try:
-                    await __change_balance(session, user.id, os.getenv('BASE_INSTRUMENT_TICKER'), -1 * new_order.amount * new_order.price)
+                    await __change_balance(session, user_id, os.getenv('BASE_INSTRUMENT_TICKER'), -1 * new_order.amount * new_order.price)
                     session.add(new_order)
 
                     await session.commit()
@@ -180,7 +180,7 @@ async def create_limit_sell_order(ticker, qty, price, user: User):
             async with session.begin():
                 orderbook = await __get_orders(session, ticker, DirectionEnum.BID, qty)
                 new_order = Order(
-                    user_id=user.id,
+                    user_id=user_id,
                     instrument_ticker=ticker,
                     amount=qty,
                     filled=0,
@@ -188,7 +188,7 @@ async def create_limit_sell_order(ticker, qty, price, user: User):
                     direction=DirectionEnum.ASK,
                     status=OrderStatusEnum.NEW
                 )
-                inventory = (await get_user_inventory(user.id, ticker))[0]
+                inventory = (await get_user_inventory(user_id, ticker))[0]
                 if inventory.quantity < qty:
                     new_order.status = OrderStatusEnum.CANCELLED
                     session.add(new_order)
@@ -210,7 +210,7 @@ async def create_limit_sell_order(ticker, qty, price, user: User):
                     total_add_ticker -= count_from_order
                     total_add_balance += count_from_order * o.price
                     await __change_balance(session, o.user_id, ticker, count_from_order)
-                    await __create_transaction(session, user.id, o.user_id, o.instrument_ticker, count_to_sell, o.price)
+                    await __create_transaction(session, user_id, o.user_id, o.instrument_ticker, count_to_sell, o.price)
                     if o.amount > count_from_order:
                         o.status = OrderStatusEnum.PARTIALLY_EXECUTED
                     else:
@@ -219,8 +219,8 @@ async def create_limit_sell_order(ticker, qty, price, user: User):
                     o.filled += count_from_order
                     session.add(o)
 
-                await __change_balance(session, user.id, ticker, total_add_ticker)
-                await __change_balance(session, user.id, os.getenv('BASE_INSTRUMENT_TICKER'), total_add_balance)
+                await __change_balance(session, user_id, ticker, total_add_ticker)
+                await __change_balance(session, user_id, os.getenv('BASE_INSTRUMENT_TICKER'), total_add_balance)
 
                 if abs(total_add_ticker) == qty:
                     new_order.status = OrderStatusEnum.EXECUTED
@@ -229,7 +229,7 @@ async def create_limit_sell_order(ticker, qty, price, user: User):
                 new_order.amount -= abs(total_add_ticker)
                 new_order.filled += abs(total_add_ticker)
                 try:
-                    await __change_balance(session, user.id, ticker, -1 * new_order.amount)
+                    await __change_balance(session, user_id, ticker, -1 * new_order.amount)
                     session.add(new_order)
                     await session.commit()
                     await session.refresh(new_order)
@@ -259,12 +259,13 @@ async def create_market_buy_order(ticker, qty, user: User):
     if ticker not in locks:
         locks[ticker] = asyncio.Lock()
     order_lock = locks[ticker]
+    user_id = user.id
     async with order_lock:
         async with async_session_maker() as session:
             async with session.begin():
                 orderbook = await __get_orders(session, ticker, DirectionEnum.ASK, qty)
                 new_order = Order(
-                    user_id=user.id,
+                    user_id=user_id,
                     instrument_ticker=ticker,
                     amount=qty,
                     filled=0,
@@ -304,7 +305,7 @@ async def create_market_buy_order(ticker, qty, user: User):
                     await __change_balance(session, order.user_id, os.getenv('BASE_INSTRUMENT_TICKER'), c * order.price)
                     total_add_balance += -1 * c * order.price
                     total_add_ticker += c
-                    await __create_transaction(session, o.user_id, user.id, o.instrument_ticker, c, o.price)
+                    await __create_transaction(session, o.user_id, user_id, o.instrument_ticker, c, o.price)
                     if order.amount > c:
                         order.status = OrderStatusEnum.PARTIALLY_EXECUTED
                     else:
@@ -313,8 +314,8 @@ async def create_market_buy_order(ticker, qty, user: User):
                     order.filled += c
                     session.add(order)
 
-                await __change_balance(session, user.id, ticker, total_add_ticker)
-                await __change_balance(session, user.id, os.getenv('BASE_INSTRUMENT_TICKER'), total_add_balance)
+                await __change_balance(session, user_id, ticker, total_add_ticker)
+                await __change_balance(session, user_id, os.getenv('BASE_INSTRUMENT_TICKER'), total_add_balance)
 
                 new_order.status = OrderStatusEnum.EXECUTED
                 new_order.amount -= abs(total_add_ticker)
@@ -326,6 +327,7 @@ async def create_market_buy_order(ticker, qty, user: User):
 
 
 async def create_market_sell_order(ticker, qty, user: User):
+    user_id = user.id
     if ticker not in locks:
         locks[ticker] = asyncio.Lock()
     order_lock = locks[ticker]
@@ -334,7 +336,7 @@ async def create_market_sell_order(ticker, qty, user: User):
             async with session.begin():
                 orderbook = await __get_orders(session, ticker, DirectionEnum.BID, qty)
                 new_order = Order(
-                    user_id=user.id,
+                    user_id=user_id,
                     instrument_ticker=ticker,
                     amount=qty,
                     filled=0,
@@ -342,7 +344,7 @@ async def create_market_sell_order(ticker, qty, user: User):
                     direction=DirectionEnum.ASK,
                     status=OrderStatusEnum.NEW
                 )
-                inventory = (await get_user_inventory(user.id, ticker))[0]
+                inventory = (await get_user_inventory(user_id, ticker))[0]
                 if sum(o.amount for o in orderbook) < qty or inventory.quantity < qty:
                     new_order.status = OrderStatusEnum.CANCELLED
                     session.add(new_order)
@@ -362,7 +364,7 @@ async def create_market_sell_order(ticker, qty, user: User):
                     await __change_balance(session, o.user_id, ticker, count_from_order)
                     total_add_balance += count_from_order * o.price
                     total_add_ticker += -1 * count_from_order
-                    await __create_transaction(session, user.id, o.user_id, o.instrument_ticker, count_from_order, o.price)
+                    await __create_transaction(session, user_id, o.user_id, o.instrument_ticker, count_from_order, o.price)
                     if o.amount > count_from_order:
                         o.status = OrderStatusEnum.PARTIALLY_EXECUTED
                     else:
@@ -371,8 +373,8 @@ async def create_market_sell_order(ticker, qty, user: User):
                     o.filled += count_from_order
                     session.add(o)
 
-                await __change_balance(session, user.id, os.getenv('BASE_INSTRUMENT_TICKER'), total_add_balance)
-                await __change_balance(session, user.id, ticker, total_add_ticker)
+                await __change_balance(session, user_id, os.getenv('BASE_INSTRUMENT_TICKER'), total_add_balance)
+                await __change_balance(session, user_id, ticker, total_add_ticker)
                 new_order.status = OrderStatusEnum.EXECUTED
                 new_order.amount -= abs(total_add_ticker)
                 new_order.filled += abs(total_add_ticker)
