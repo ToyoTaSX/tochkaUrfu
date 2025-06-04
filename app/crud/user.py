@@ -54,7 +54,10 @@ async def delete_user(uuid_str: str) -> Optional[User]:
 
 async def change_balance(id: [uuid.UUID, str], ticker: str, amount: int) -> Optional[User]:
     async with async_session_maker() as session:
-        return await __change_balance(session, id, ticker, amount)
+        b = await __change_balance(session, id, ticker, amount)
+        await session.commit()
+        await session.refresh(b)
+        return b
 
 
 async def __change_balance(session, id: [uuid.UUID, str], ticker: str, amount: int) -> Optional[User]:
