@@ -149,22 +149,23 @@ async def create_limit_buy_order(ticker, qty, price, user: User):
                     return new_order
                 except:
                     await session.rollback()
-                    async with async_session_maker() as new_session:
-                        async with new_session.begin():
-                            canceled = Order(
-                                user_id=user.id,
-                                instrument_ticker=ticker,
-                                amount=qty,
-                                filled=0,
-                                price=price,
-                                direction=DirectionEnum.BID,
-                                status=OrderStatusEnum.CANCELLED
-                            )
-                            new_session.add(canceled)
 
-                            await new_session.commit()
-                            await new_session.refresh(canceled)
-                            return canceled
+        async with async_session_maker() as new_session:
+            async with new_session.begin():
+                canceled = Order(
+                    user_id=user.id,
+                    instrument_ticker=ticker,
+                    amount=qty,
+                    filled=0,
+                    price=price,
+                    direction=DirectionEnum.BID,
+                    status=OrderStatusEnum.CANCELLED
+                )
+                new_session.add(canceled)
+
+                await new_session.commit()
+                await new_session.refresh(canceled)
+                return canceled
 
 
 
@@ -233,21 +234,22 @@ async def create_limit_sell_order(ticker, qty, price, user: User):
                     return new_order
                 except:
                     await session.rollback()
-                    async with async_session_maker() as new_session:
-                        async with new_session.begin():
-                            canceled = Order(
-                                user_id=user.id,
-                                instrument_ticker=ticker,
-                                amount=qty,
-                                filled=0,
-                                price=price,
-                                direction=DirectionEnum.ASK,
-                                status=OrderStatusEnum.CANCELLED
-                            )
-                            new_session.add(canceled)
-                            await new_session.commit()
-                            await new_session.refresh(canceled)
-                            return canceled
+                    
+        async with async_session_maker() as new_session:
+            async with new_session.begin():
+                canceled = Order(
+                    user_id=user.id,
+                    instrument_ticker=ticker,
+                    amount=qty,
+                    filled=0,
+                    price=price,
+                    direction=DirectionEnum.ASK,
+                    status=OrderStatusEnum.CANCELLED
+                )
+                new_session.add(canceled)
+                await new_session.commit()
+                await new_session.refresh(canceled)
+                return canceled
 
 
 
