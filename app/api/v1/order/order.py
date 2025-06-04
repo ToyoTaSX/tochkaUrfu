@@ -19,7 +19,8 @@ router = APIRouter()
 @router.get('')
 async def order(user: User = Depends(get_current_user)):
     orders = await get_user_orders(str(user.id))
-    print('orders count', orders)
+    print('my orders')
+    pprint(orders)
     return orders
 
 
