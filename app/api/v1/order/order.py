@@ -68,6 +68,7 @@ async def order(order_id: uuid.UUID, user: User = Depends(get_current_user)):
 @router.post('')
 async def order(order: CreateOrderScheme, user: User = Depends(get_current_user)):
     print('create order')
+    pprint(order)
     order_ = None
     instrument = await get_instrument_by_ticker(order.ticker)
     if not instrument:

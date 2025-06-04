@@ -1,4 +1,5 @@
 from datetime import timezone
+from pprint import pprint
 
 from fastapi import APIRouter, Depends
 from api.v1.auth.jwt import get_current_user, create_access_token, get_current_admin
@@ -47,10 +48,12 @@ async def public_test(instrument: Instrument = Depends(get_instrument_depend), l
         "price": a.price,
         "qty": a.amount
     } for a in ask_orders]
-    return {
+    res = {
         "bid_levels": bid_orders,
         "ask_levels": ask_orders
     }
+    pprint(res)
+    return res
 
 @router.get('/transactions/{ticker}')
 async def public_test(instrument: Instrument = Depends(get_instrument_depend), limit: int = 10):
