@@ -11,7 +11,7 @@ from crud.instrument import get_instrument_by_ticker
 from crud.order import create_limit_sell_order, create_limit_buy_order, create_market_buy_order, \
     create_market_sell_order, cancel_order, get_order
 from crud.user import get_user_orders
-from database.models import User, OrderStatusEnum, DirectionEnum
+from database.models import User, OrderStatusEnum, DirectionEnum, Order
 
 router = APIRouter()
 
@@ -20,8 +20,8 @@ router = APIRouter()
 async def order(user: User = Depends(get_current_user)):
     orders = await get_user_orders(str(user.id))
     print('my orders')
-    pprint(orders)
-    return orders
+    res = [pretty_order(o) for o in orders]
+    return res
 
 
 @router.delete('/{order_id}')
@@ -48,6 +48,9 @@ async def order(order_id: uuid.UUID, user: User = Depends(get_current_user)):
     if order.user_id != user.id:
         raise HTTPException(403)
 
+    return pretty_order(order)
+
+def pretty_order(order: Order):
     your_datetime = order.created_at
     datetime_utc = your_datetime.astimezone(timezone.utc)
     formatted_timestamp = datetime_utc.isoformat(timespec='milliseconds').replace('+00:00', 'Z')
@@ -64,6 +67,7 @@ async def order(order_id: uuid.UUID, user: User = Depends(get_current_user)):
         },
         "filled": order.filled
     }
+
 
 
 @router.post('')
