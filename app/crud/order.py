@@ -107,7 +107,7 @@ async def create_limit_buy_order(ticker, qty, price, user: User):
                 if new_order.status != OrderStatusEnum.EXECUTED:
                     await freeze_balance(session, user.id, RUB, new_order.amount * new_order.price)
 
-                await session.add(new_order)
+                session.add(new_order)
                 await session.commit()
                 return new_order
 
@@ -118,7 +118,7 @@ async def create_limit_buy_order(ticker, qty, price, user: User):
                 new_order.filled = 0
                 new_order.amount = qty
                 new_order.status = OrderStatusEnum.CANCELLED
-                await session.add(new_order)
+                session.add(new_order)
                 await session.commit()
                 return new_order
 
@@ -153,7 +153,7 @@ async def create_limit_sell_order(ticker, qty, price, user: User):
                 if new_order.status != OrderStatusEnum.EXECUTED:
                     await freeze_balance(session, user.id, ticker, new_order.amount)
 
-                await session.add(new_order)
+                session.add(new_order)
                 await session.commit()
                 return new_order
 
@@ -164,7 +164,7 @@ async def create_limit_sell_order(ticker, qty, price, user: User):
                 new_order.filled = 0
                 new_order.amount = qty
                 new_order.status = OrderStatusEnum.CANCELLED
-                await session.add(new_order)
+                session.add(new_order)
                 await session.commit()
                 return new_order
 
@@ -246,7 +246,7 @@ async def create_market_sell_order(ticker, qty, user: User):
                     if new_order.status != OrderStatusEnum.EXECUTED:
                         raise Exception('Not enough orders')
 
-                    await session.add(new_order)
+                    session.add(new_order)
                     await session.commit()
                     return new_order
 
@@ -257,7 +257,7 @@ async def create_market_sell_order(ticker, qty, user: User):
                     new_order.filled = 0
                     new_order.amount = qty
                     new_order.status = OrderStatusEnum.CANCELLED
-                    await session.add(new_order)
+                    session.add(new_order)
                     await session.commit()
                     return new_order
 
