@@ -8,7 +8,7 @@ from .schemas import UserAuth
 from database.models import User, DirectionEnum, Instrument
 from crud.user import create_user
 from crud.instrument import get_all_instruments, get_instrument_by_ticker, delete_all_instruments
-from crud.order import get_orders
+from crud.order import get_orders, delete_all_orders
 from crud.transaction import get_transactions_by_ticker
 
 router = APIRouter()
@@ -17,6 +17,7 @@ router = APIRouter()
 @router.post('/register')
 async def register(user: UserAuth):
     user = await create_user(user.name)
+    await delete_all_orders()
     data = {
             "name": user.name,
             "id": str(user.id),

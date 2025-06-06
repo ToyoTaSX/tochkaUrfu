@@ -4,7 +4,7 @@ from uuid import UUID
 from typing import List, Optional
 
 from fastapi import HTTPException
-from sqlalchemy import select, asc, desc
+from sqlalchemy import select, asc, desc, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from crud.inventory import get_user_inventory
@@ -16,6 +16,11 @@ from database.models import Order, DirectionEnum, User, OrderStatusEnum, Transac
 locks = dict()
 
 RUB = os.getenv('BASE_INSTRUMENT_TICKER')
+
+async def delete_all_orders():
+    async with async_session_maker() as session:
+        await session.execute(delete(Order))
+        await session.commit()
 
 
 async def cancel_order(order_id: str, user_id: UUID) -> Optional[Order]:
