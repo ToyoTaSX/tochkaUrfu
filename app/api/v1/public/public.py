@@ -1,6 +1,6 @@
 from datetime import timezone
 from pprint import pprint
-
+from collections import defaultdict
 from fastapi import APIRouter, Depends
 from api.v1.auth.jwt import get_current_user, create_access_token, get_current_admin
 from depends import get_instrument_depend
@@ -19,14 +19,15 @@ async def register(user: UserAuth):
     user = await create_user(user.name)
     await delete_all_orders()
     data = {
-            "name": user.name,
-            "id": str(user.id),
-            "role": user.role.name
-        }
+        "name": user.name,
+        "id": str(user.id),
+        "role": user.role.name
+    }
     token = create_access_token(data)
     data['api_key'] = token
     print('create user ', user.id)
     return data
+
 
 @router.get('/instrument')
 async def public_test():
@@ -34,6 +35,7 @@ async def public_test():
         "name": i.name,
         "ticker": i.ticker
     } for i in await get_all_instruments()]
+
 
 # @router.get('/orderbook/{ticker}')
 # async def public_test(instrument: Instrument = Depends(get_instrument_depend), limit: int = 10):
@@ -56,7 +58,6 @@ async def public_test():
 #     pprint(res)
 #     return res
 
-from collections import defaultdict
 
 @router.get('/orderbook/{ticker}')
 async def public_test(instrument: Instrument = Depends(get_instrument_depend), limit: int = 10):
@@ -67,7 +68,8 @@ async def public_test(instrument: Instrument = Depends(get_instrument_depend), l
         aggregated = defaultdict(int)
         for order in orders:
             aggregated[order.price] += order.amount
-        return [{"price": price, "qty": qty} for price, qty in sorted(aggregated.items(), reverse=(direction == DirectionEnum.BID))]
+        return [{"price": price, "qty": qty} for price, qty in
+                sorted(aggregated.items(), reverse=(direction == DirectionEnum.BID))]
 
     bid_orders = await aggregate_orders(DirectionEnum.BID)
     ask_orders = await aggregate_orders(DirectionEnum.ASK)
@@ -78,6 +80,7 @@ async def public_test(instrument: Instrument = Depends(get_instrument_depend), l
     }
     pprint(res)
     return res
+
 
 @router.get('/transactions/{ticker}')
 async def public_test(instrument: Instrument = Depends(get_instrument_depend), limit: int = 10):
