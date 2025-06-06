@@ -35,20 +35,43 @@ async def public_test():
         "ticker": i.ticker
     } for i in await get_all_instruments()]
 
+# @router.get('/orderbook/{ticker}')
+# async def public_test(instrument: Instrument = Depends(get_instrument_depend), limit: int = 10):
+#     ticker = instrument.ticker
+#     bid_orders = await get_orders(ticker, DirectionEnum.BID, limit=limit)
+#     bid_orders = [{
+#         "price": b.price,
+#         "qty": b.amount
+#     } for b in bid_orders]
+#
+#     ask_orders = await get_orders(ticker, DirectionEnum.ASK, limit=limit)
+#     ask_orders = [{
+#         "price": a.price,
+#         "qty": a.amount
+#     } for a in ask_orders]
+#     res = {
+#         "bid_levels": bid_orders,
+#         "ask_levels": ask_orders
+#     }
+#     pprint(res)
+#     return res
+
+from collections import defaultdict
+
 @router.get('/orderbook/{ticker}')
 async def public_test(instrument: Instrument = Depends(get_instrument_depend), limit: int = 10):
     ticker = instrument.ticker
-    bid_orders = await get_orders(ticker, DirectionEnum.BID, limit=limit)
-    bid_orders = [{
-        "price": b.price,
-        "qty": b.amount
-    } for b in bid_orders]
 
-    ask_orders = await get_orders(ticker, DirectionEnum.ASK, limit=limit)
-    ask_orders = [{
-        "price": a.price,
-        "qty": a.amount
-    } for a in ask_orders]
+    async def aggregate_orders(direction: DirectionEnum):
+        orders = await get_orders(ticker, direction, limit=limit)
+        aggregated = defaultdict(int)
+        for order in orders:
+            aggregated[order.price] += order.amount
+        return [{"price": price, "qty": qty} for price, qty in sorted(aggregated.items(), reverse=(direction == DirectionEnum.BID))]
+
+    bid_orders = await aggregate_orders(DirectionEnum.BID)
+    ask_orders = await aggregate_orders(DirectionEnum.ASK)
+
     res = {
         "bid_levels": bid_orders,
         "ask_levels": ask_orders
