@@ -105,8 +105,8 @@ async def create_limit_buy_order(ticker, qty, price, user: User):
                         break
                     count_to_buy = min(order.amount, new_order.amount)
                     await buy(session, order.user_id, user.id, ticker, order.price, count_to_buy)
-                    await partially_execute_order(order, count_to_buy)
-                    await partially_execute_order(new_order, count_to_buy)
+                    await partially_execute_order(session, order, count_to_buy)
+                    await partially_execute_order(session, new_order, count_to_buy)
 
                 # Замораживаем баланс для остатка ордера
                 if new_order.status != OrderStatusEnum.EXECUTED:
@@ -151,8 +151,8 @@ async def create_limit_sell_order(ticker, qty, price, user: User):
                         break
                     count_to_sell = min(order.amount, new_order.amount)
                     await sell(session, user.id, order.user_id, ticker, order.price, count_to_sell)
-                    await partially_execute_order(order, count_to_sell)
-                    await partially_execute_order(new_order, count_to_sell)
+                    await partially_execute_order(session, order, count_to_sell)
+                    await partially_execute_order(session, new_order, count_to_sell)
 
                 # Замораживаем инструменты
                 if new_order.status != OrderStatusEnum.EXECUTED:
@@ -197,8 +197,8 @@ async def create_market_buy_order(ticker, qty, user: User):
                         break
                     count_to_buy = min(order.amount, new_order.amount)
                     await buy(session, order.user_id, user.id, ticker, order.price, count_to_buy)
-                    await partially_execute_order(order, count_to_buy)
-                    await partially_execute_order(new_order, count_to_buy)
+                    await partially_execute_order(session, order, count_to_buy)
+                    await partially_execute_order(session, new_order, count_to_buy)
 
                 # Проверяем, что ордер полностью выполнен
                 if new_order.status != OrderStatusEnum.EXECUTED:
@@ -243,8 +243,8 @@ async def create_market_sell_order(ticker, qty, user: User):
                         break
                     count_to_sell = min(order.amount, new_order.amount)
                     await sell(session, user.id, order.user_id, ticker, order.price, count_to_sell)
-                    await partially_execute_order(order, count_to_sell)
-                    await partially_execute_order(new_order, count_to_sell)
+                    await partially_execute_order(session, order, count_to_sell)
+                    await partially_execute_order(session, new_order, count_to_sell)
 
                 # Замораживаем инструменты
                 if new_order.status != OrderStatusEnum.EXECUTED:
@@ -323,12 +323,13 @@ async def sell(session: AsyncSession, seller_id: UUID, buyer_id: UUID, ticker: s
     return transaction
 
 
-async def partially_execute_order(order: Order, amount: int):
+async def partially_execute_order(session: AsyncSession, order: Order, amount: int):
     if order.amount < amount:
         raise Exception('Order not enough amount')
     order.amount -= amount
     order.filled += amount
     order.status = OrderStatusEnum.EXECUTED if order.amount == 0 else OrderStatusEnum.PARTIALLY_EXECUTED
+    await session.flush()
 
 
 async def freeze_balance(session, user_id: UUID, ticker: str, amount: int):

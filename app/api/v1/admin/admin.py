@@ -1,4 +1,5 @@
 import os
+from pprint import pprint
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -27,6 +28,7 @@ async def instrument(instrument: InstrumentCreateRequest, user: User = Depends(g
 @router.post('/balance/deposit')
 async def deposit(balance_change: BalanceChangeScheme, admin: User = Depends(get_current_admin)):
     user = await get_user(str(balance_change.user_id))
+    pprint(balance_change)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
