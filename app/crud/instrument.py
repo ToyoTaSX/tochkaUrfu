@@ -1,3 +1,4 @@
+import asyncio
 from typing import Optional
 
 from fastapi import HTTPException
@@ -33,7 +34,11 @@ async def get_instrument_by_ticker(ticker: str) -> Optional[Instrument]:
         return instrument
 
 async def delete_instrument(ticker: str) -> Instrument:
-    async with acquire_locks(*LOCKS[ticker]):
+    if ticker not in LOCKS:
+        LOCKS[ticker] = asyncio.Lock()
+    lock = LOCKS[ticker]
+
+    async with acquire_locks(lock):
         async with async_session_maker() as session:
             instrument = await get_instrument_by_ticker(ticker)
             if not instrument:
