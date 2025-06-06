@@ -10,10 +10,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from crud.inventory import get_user_inventory
 from crud.transaction import __create_transaction
 from crud.user import __change_balance
+from crud.locks import LOCKS, acquire_locks
 from database.database import async_session_maker
 from database.models import Order, DirectionEnum, User, OrderStatusEnum, Transaction, UserInventory
 
-locks = dict()
 
 RUB = os.getenv('BASE_INSTRUMENT_TICKER')
 
@@ -31,8 +31,8 @@ async def cancel_order(order_id: str, user_id: UUID) -> Optional[Order]:
         if not order:
             return None
 
-        lock = locks[order.instrument_ticker]
-        async with lock:
+        lock = LOCKS[order.instrument_ticker]
+        async with acquire_locks(lock):
             if order.status in [OrderStatusEnum.PARTIALLY_EXECUTED, OrderStatusEnum.EXECUTED]:
                 raise HTTPException(400, 'Order executed/partially_executed')
             if order.price is None:
@@ -82,10 +82,10 @@ async def __get_orders(session, ticker: str, direction: DirectionEnum, limit: in
 
 
 async def create_limit_buy_order(ticker, qty, price, user: User):
-    if ticker not in locks:
-        locks[ticker] = asyncio.Lock()
-    order_lock = locks[ticker]
-    async with order_lock:
+    if ticker not in LOCKS:
+        LOCKS[ticker] = asyncio.Lock()
+    order_lock = LOCKS[ticker]
+    async with acquire_locks(order_lock):
         async with async_session_maker() as session:
             orderbook = await __get_orders(session, ticker, DirectionEnum.ASK, qty)
             new_order = Order(
@@ -128,10 +128,10 @@ async def create_limit_buy_order(ticker, qty, price, user: User):
 
 
 async def create_limit_sell_order(ticker, qty, price, user: User):
-    if ticker not in locks:
-        locks[ticker] = asyncio.Lock()
-    order_lock = locks[ticker]
-    async with order_lock:
+    if ticker not in LOCKS:
+        LOCKS[ticker] = asyncio.Lock()
+    order_lock = LOCKS[ticker]
+    async with acquire_locks(order_lock):
         async with async_session_maker() as session:
             orderbook = await __get_orders(session, ticker, DirectionEnum.BID, qty)
             new_order = Order(
@@ -174,10 +174,10 @@ async def create_limit_sell_order(ticker, qty, price, user: User):
 
 
 async def create_market_buy_order(ticker, qty, user: User):
-    if ticker not in locks:
-        locks[ticker] = asyncio.Lock()
-    order_lock = locks[ticker]
-    async with order_lock:
+    if ticker not in LOCKS:
+        LOCKS[ticker] = asyncio.Lock()
+    order_lock = LOCKS[ticker]
+    async with acquire_locks(order_lock):
         async with async_session_maker() as session:
             orderbook = await __get_orders(session, ticker, DirectionEnum.ASK, qty)
             new_order = Order(
@@ -220,10 +220,10 @@ async def create_market_buy_order(ticker, qty, user: User):
 
 
 async def create_market_sell_order(ticker, qty, user: User):
-    if ticker not in locks:
-        locks[ticker] = asyncio.Lock()
-    order_lock = locks[ticker]
-    async with order_lock:
+    if ticker not in LOCKS:
+        LOCKS[ticker] = asyncio.Lock()
+    order_lock = LOCKS[ticker]
+    async with acquire_locks(order_lock):
         async with async_session_maker() as session:
             orderbook = await __get_orders(session, ticker, DirectionEnum.BID, qty)
             new_order = Order(

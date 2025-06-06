@@ -4,6 +4,7 @@ from fastapi import HTTPException
 
 from sqlalchemy import select
 
+from crud.locks import LOCKS, acquire_locks
 from database.database import async_session_maker
 from database.models import Instrument, User, UserInventory
 
@@ -32,13 +33,15 @@ async def get_instrument_by_ticker(ticker: str) -> Optional[Instrument]:
         return instrument
 
 async def delete_instrument(ticker: str) -> Instrument:
-    async with async_session_maker() as session:
-        instrument = await get_instrument_by_ticker(ticker)
-        if not instrument:
-            raise HTTPException(status_code=404, detail='Инструмент с данным ticker е найден')
-        await session.delete(instrument)
-        await session.commit()
-        return instrument
+    async with acquire_locks(*LOCKS[ticker]):
+        async with async_session_maker() as session:
+            instrument = await get_instrument_by_ticker(ticker)
+            if not instrument:
+                raise HTTPException(status_code=404, detail='Инструмент с данным ticker е найден')
+            await session.delete(instrument)
+            await session.commit()
+            return instrument
+    LOCKS.pop(ticker)
 
 async def delete_all_instruments() -> None:
     instruments = await get_all_instruments()

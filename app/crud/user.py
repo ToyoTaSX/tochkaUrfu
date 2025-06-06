@@ -7,6 +7,7 @@ from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
+from crud.locks import acquire_locks, LOCKS
 from database.models import User, RoleEnum, Instrument, UserInventory, Order
 from database.database import async_session_maker
 
@@ -43,14 +44,15 @@ async def apply_api_key(uuid_str: str, key:str):
         return user
 
 async def delete_user(uuid_str: str) -> Optional[User]:
-    async with async_session_maker() as session:
-        user = await get_user(uuid_str)
-        if not user:
-            raise HTTPException(status_code=404, detail='Пользователь с таким id не найден')
-        await session.delete(user)
-        await session.commit()
-        #await asyncio.sleep(1)
-        return user
+    async with acquire_locks(*LOCKS.values()):
+        async with async_session_maker() as session:
+            user = await get_user(uuid_str)
+            if not user:
+                raise HTTPException(status_code=404, detail='Пользователь с таким id не найден')
+            await session.delete(user)
+            await session.commit()
+            #await asyncio.sleep(1)
+            return user
 
 async def change_balance(id: [uuid.UUID, str], ticker: str, amount: int) -> Optional[User]:
     async with async_session_maker() as session:
