@@ -239,7 +239,7 @@ async def create_market_sell_order(ticker, qty, user: User):
             try:
                 # Продаем все что можно
                 for order in orderbook:
-                    if new_order.amount:
+                    if new_order.amount == 0:
                         break
                     count_to_sell = min(order.amount, new_order.amount)
                     await sell(session, user.id, order.user_id, ticker, order.price, count_to_sell)
