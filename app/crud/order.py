@@ -25,31 +25,30 @@ async def delete_all_orders():
 
 async def cancel_order(order_id: str, user_id: UUID) -> Optional[Order]:
     async with async_session_maker() as session:
-        async with session.begin():
-            q = select(Order).where(Order.id == order_id, Order.user_id == user_id)
-            result = await session.execute(q)
-            order: Order = result.scalars().first()
-            if not order:
-                return None
+        q = select(Order).where(Order.id == order_id, Order.user_id == user_id)
+        result = await session.execute(q)
+        order: Order = result.scalars().first()
+        if not order:
+            return None
 
-            lock = locks[order.instrument_ticker]
-            async with lock:
-                if order.status in [OrderStatusEnum.PARTIALLY_EXECUTED, OrderStatusEnum.EXECUTED]:
-                    raise HTTPException(400, 'Order executed/partially_executed')
-                if order.price is None:
-                    raise HTTPException(400, 'Order is market')
-                if order.price is not None and order.status in [OrderStatusEnum.PARTIALLY_EXECUTED,
-                                                                OrderStatusEnum.NEW]:
-                    if order.direction == DirectionEnum.ASK:
-                        await __change_balance(session, order.user_id, order.instrument_ticker, order.amount)
-                    elif order.direction == DirectionEnum.BID:
-                        await __change_balance(session, order.user_id, RUB, order.amount * order.price)
-                order.status = OrderStatusEnum.CANCELLED
-                session.add(order)
-                await session.flush()  # гарантирует, что объект вставлен, но транзакция ещё не зафиксирована
-                await session.refresh(order)
-                await session.commit()
-                return order
+        lock = locks[order.instrument_ticker]
+        async with lock:
+            if order.status in [OrderStatusEnum.PARTIALLY_EXECUTED, OrderStatusEnum.EXECUTED]:
+                raise HTTPException(400, 'Order executed/partially_executed')
+            if order.price is None:
+                raise HTTPException(400, 'Order is market')
+            if order.price is not None and order.status in [OrderStatusEnum.PARTIALLY_EXECUTED,
+                                                            OrderStatusEnum.NEW]:
+                if order.direction == DirectionEnum.ASK:
+                    await __change_balance(session, order.user_id, order.instrument_ticker, order.amount)
+                elif order.direction == DirectionEnum.BID:
+                    await __change_balance(session, order.user_id, RUB, order.amount * order.price)
+            order.status = OrderStatusEnum.CANCELLED
+            session.add(order)
+            await session.flush()
+            await session.refresh(order)
+            await session.commit()
+            return order
 
 
 async def get_order(order_id: str) -> Optional[Order]:
