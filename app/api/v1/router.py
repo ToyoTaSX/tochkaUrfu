@@ -31,4 +31,5 @@ async def balance(user: User = Depends(get_current_user)):
                 # Ордер на покупку
                 result[os.getenv('BASE_INSTRUMENT_TICKER')] += o.amount * o.price
     pprint(result)
+    result = {i.instrument_ticker: i.quantity for i in inv if i.quantity > 0}
     return result
