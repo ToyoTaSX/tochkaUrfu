@@ -1,4 +1,5 @@
 import os
+from pprint import pprint
 
 from fastapi import APIRouter, Depends
 
@@ -29,5 +30,5 @@ async def balance(user: User = Depends(get_current_user)):
             elif o.direction == DirectionEnum.BID:
                 # Ордер на покупку
                 result[os.getenv('BASE_INSTRUMENT_TICKER')] += o.amount * o.price
-
+    pprint(result)
     return result
