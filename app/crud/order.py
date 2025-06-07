@@ -33,16 +33,15 @@ async def cancel_order(order_id: str, user_id: UUID) -> Optional[Order]:
 
         lock = LOCKS[order.instrument_ticker]
         async with acquire_locks(lock):
-            if order.status in [OrderStatusEnum.PARTIALLY_EXECUTED, OrderStatusEnum.EXECUTED]:
-                raise HTTPException(400, 'Order executed/partially_executed')
+            if order.status in [OrderStatusEnum.PARTIALLY_EXECUTED, OrderStatusEnum.EXECUTED, OrderStatusEnum.CANCELLED]:
+                raise HTTPException(400, 'Order executed/partially_executed/cancelled')
             if order.price is None:
                 raise HTTPException(400, 'Order is market')
-            if order.price is not None and order.status in [OrderStatusEnum.PARTIALLY_EXECUTED,
-                                                            OrderStatusEnum.NEW]:
-                if order.direction == DirectionEnum.ASK:
-                    await __change_balance(session, order.user_id, order.instrument_ticker, order.amount)
-                elif order.direction == DirectionEnum.BID:
-                    await __change_balance(session, order.user_id, RUB, order.amount * order.price)
+
+            if order.direction == DirectionEnum.ASK:
+                await __change_balance(session, order.user_id, order.instrument_ticker, order.amount)
+            elif order.direction == DirectionEnum.BID:
+                await __change_balance(session, order.user_id, RUB, order.amount * order.price)
             order.status = OrderStatusEnum.CANCELLED
             session.add(order)
             await session.flush()
@@ -100,7 +99,7 @@ async def create_limit_buy_order(ticker, qty, price, user: User):
             try:
                 # Скупаем все что можно
                 for order in orderbook:
-                    if order.price > price or new_order.amount == 0:
+                    if new_order.amount == 0 or (price is not None and order.price > price):
                         break
                     count_to_buy = min(order.amount, new_order.amount)
                     await buy(session, order.user_id, user.id, ticker, order.price, count_to_buy)
@@ -109,7 +108,10 @@ async def create_limit_buy_order(ticker, qty, price, user: User):
 
                 # Замораживаем баланс для остатка ордера
                 if new_order.status != OrderStatusEnum.EXECUTED:
-                    await freeze_balance(session, user.id, RUB, new_order.amount * new_order.price)
+                    if price is not None:
+                        await freeze_balance(session, user.id, RUB, new_order.amount * new_order.price)
+                    else:
+                        raise Exception('Not enough orders')
 
                 session.add(new_order)
                 await session.commit()
@@ -146,7 +148,7 @@ async def create_limit_sell_order(ticker, qty, price, user: User):
             try:
                 # Продаем все что можно
                 for order in orderbook:
-                    if order.price < price or new_order.amount == 0:
+                    if new_order.amount == 0 or (price is not None and order.price < price):
                         break
                     count_to_sell = min(order.amount, new_order.amount)
                     await sell(session, user.id, order.user_id, ticker, order.price, count_to_sell)
@@ -155,7 +157,10 @@ async def create_limit_sell_order(ticker, qty, price, user: User):
 
                 # Замораживаем инструменты
                 if new_order.status != OrderStatusEnum.EXECUTED:
-                    await freeze_balance(session, user.id, ticker, new_order.amount)
+                    if price is not None:
+                        await freeze_balance(session, user.id, ticker, new_order.amount)
+                    else:
+                        raise Exception('Not enough orders')
 
                 session.add(new_order)
                 await session.commit()
@@ -174,95 +179,97 @@ async def create_limit_sell_order(ticker, qty, price, user: User):
 
 
 async def create_market_buy_order(ticker, qty, user: User):
-    if ticker not in LOCKS:
-        LOCKS[ticker] = asyncio.Lock()
-    order_lock = LOCKS[ticker]
-    async with acquire_locks(order_lock):
-        async with async_session_maker() as session:
-            orderbook = await __get_orders(session, ticker, DirectionEnum.ASK, qty)
-            new_order = Order(
-                user_id=user.id,
-                instrument_ticker=ticker,
-                amount=qty,
-                filled=0,
-                price=None,
-                direction=DirectionEnum.BID,
-                status=OrderStatusEnum.NEW
-            )
-            try:
-                # Скупаем все что можно
-                for order in orderbook:
-                    if new_order.amount == 0:
-                        break
-                    count_to_buy = min(order.amount, new_order.amount)
-                    await buy(session, order.user_id, user.id, ticker, order.price, count_to_buy)
-                    await partially_execute_order(session, order, count_to_buy)
-                    await partially_execute_order(session, new_order, count_to_buy)
-
-                # Проверяем, что ордер полностью выполнен
-                if new_order.status != OrderStatusEnum.EXECUTED:
-                    raise Exception('Not enough orders')
-
-                session.add(new_order)
-                await session.commit()
-                return new_order
-
-            except Exception as e:
-                # Не хватило ордеров или денег
-                print(e)
-                await session.rollback()
-                new_order.filled = 0
-                new_order.amount = qty
-                new_order.status = OrderStatusEnum.CANCELLED
-                session.add(new_order)
-                await session.commit()
-                return new_order
+    return await create_limit_buy_order(ticker, qty, None, user)
+    # if ticker not in LOCKS:
+    #     LOCKS[ticker] = asyncio.Lock()
+    # order_lock = LOCKS[ticker]
+    # async with acquire_locks(order_lock):
+    #     async with async_session_maker() as session:
+    #         orderbook = await __get_orders(session, ticker, DirectionEnum.ASK, qty)
+    #         new_order = Order(
+    #             user_id=user.id,
+    #             instrument_ticker=ticker,
+    #             amount=qty,
+    #             filled=0,
+    #             price=None,
+    #             direction=DirectionEnum.BID,
+    #             status=OrderStatusEnum.NEW
+    #         )
+    #         try:
+    #             # Скупаем все что можно
+    #             for order in orderbook:
+    #                 if new_order.amount == 0:
+    #                     break
+    #                 count_to_buy = min(order.amount, new_order.amount)
+    #                 await buy(session, order.user_id, user.id, ticker, order.price, count_to_buy)
+    #                 await partially_execute_order(session, order, count_to_buy)
+    #                 await partially_execute_order(session, new_order, count_to_buy)
+    #
+    #             # Проверяем, что ордер полностью выполнен
+    #             if new_order.status != OrderStatusEnum.EXECUTED:
+    #                 raise Exception('Not enough orders')
+    #
+    #             session.add(new_order)
+    #             await session.commit()
+    #             return new_order
+    #
+    #         except Exception as e:
+    #             # Не хватило ордеров или денег
+    #             print(e)
+    #             await session.rollback()
+    #             new_order.filled = 0
+    #             new_order.amount = qty
+    #             new_order.status = OrderStatusEnum.CANCELLED
+    #             session.add(new_order)
+    #             await session.commit()
+    #             return new_order
 
 
 async def create_market_sell_order(ticker, qty, user: User):
-    if ticker not in LOCKS:
-        LOCKS[ticker] = asyncio.Lock()
-    order_lock = LOCKS[ticker]
-    async with acquire_locks(order_lock):
-        async with async_session_maker() as session:
-            orderbook = await __get_orders(session, ticker, DirectionEnum.BID, qty)
-            new_order = Order(
-                user_id=user.id,
-                instrument_ticker=ticker,
-                amount=qty,
-                filled=0,
-                price=None,
-                direction=DirectionEnum.ASK,
-                status=OrderStatusEnum.NEW
-            )
-            try:
-                # Продаем все что можно
-                for order in orderbook:
-                    if new_order.amount == 0:
-                        break
-                    count_to_sell = min(order.amount, new_order.amount)
-                    await sell(session, user.id, order.user_id, ticker, order.price, count_to_sell)
-                    await partially_execute_order(session, order, count_to_sell)
-                    await partially_execute_order(session, new_order, count_to_sell)
-
-                # Замораживаем инструменты
-                if new_order.status != OrderStatusEnum.EXECUTED:
-                    raise Exception('Not enough orders')
-
-                session.add(new_order)
-                await session.commit()
-                return new_order
-
-            except Exception as e:
-                # Не хватило инструментов
-                print(e)
-                await session.rollback()
-                new_order.filled = 0
-                new_order.amount = qty
-                new_order.status = OrderStatusEnum.CANCELLED
-                session.add(new_order)
-                await session.commit()
-                return new_order
+    return await create_limit_sell_order(ticker, qty, None, user)
+    # if ticker not in LOCKS:
+    #     LOCKS[ticker] = asyncio.Lock()
+    # order_lock = LOCKS[ticker]
+    # async with acquire_locks(order_lock):
+    #     async with async_session_maker() as session:
+    #         orderbook = await __get_orders(session, ticker, DirectionEnum.BID, qty)
+    #         new_order = Order(
+    #             user_id=user.id,
+    #             instrument_ticker=ticker,
+    #             amount=qty,
+    #             filled=0,
+    #             price=None,
+    #             direction=DirectionEnum.ASK,
+    #             status=OrderStatusEnum.NEW
+    #         )
+    #         try:
+    #             # Продаем все что можно
+    #             for order in orderbook:
+    #                 if new_order.amount == 0:
+    #                     break
+    #                 count_to_sell = min(order.amount, new_order.amount)
+    #                 await sell(session, user.id, order.user_id, ticker, order.price, count_to_sell)
+    #                 await partially_execute_order(session, order, count_to_sell)
+    #                 await partially_execute_order(session, new_order, count_to_sell)
+    #
+    #             # Замораживаем инструменты
+    #             if new_order.status != OrderStatusEnum.EXECUTED:
+    #                 raise Exception('Not enough orders')
+    #
+    #             session.add(new_order)
+    #             await session.commit()
+    #             return new_order
+    #
+    #         except Exception as e:
+    #             # Не хватило инструментов
+    #             print(e)
+    #             await session.rollback()
+    #             new_order.filled = 0
+    #             new_order.amount = qty
+    #             new_order.status = OrderStatusEnum.CANCELLED
+    #             session.add(new_order)
+    #             await session.commit()
+    #             return new_order
 
 
 async def buy(session: AsyncSession, seller_id: UUID, buyer_id: UUID, ticker: str, price: int, amount: int):
