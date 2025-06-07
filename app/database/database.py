@@ -13,11 +13,11 @@ print(DATABASE_URL)
 engine = create_async_engine(
     DATABASE_URL,
     echo=False,
-    pool_size=20,
-    max_overflow=50,
-    pool_recycle=3600,
+    pool_size=10,
+    max_overflow=15,
+    pool_recycle=1800,
     pool_pre_ping=True,
-    pool_timeout=60
+    pool_timeout=30
 )
 async_session_maker = async_sessionmaker(engine, expire_on_commit=False)
 
